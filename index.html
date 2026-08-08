@@ -322,7 +322,7 @@
 
   function buildClusters(){
     clusters = [];
-    const nClusters = W < 500 ? 3 : 5;
+    const nClusters = 5;
     for(let c=0; c<nClusters; c++){
       const cx = (W/(nClusters+1))*(c+1) + jitter(0, W*0.08);
       const cy = H*(0.15+Math.random()*0.7);
