@@ -44,11 +44,11 @@
   .topbar-left{display:flex; align-items:center; gap:10px;}
   .node-dot{width:9px; height:9px; border-radius:50%; background:var(--synapse); box-shadow:0 0 12px var(--synapse), 0 0 24px rgba(45,225,252,.5); animation:pulse-dot 2.4s ease-in-out infinite;}
   @keyframes pulse-dot{0%,100%{opacity:.6; transform:scale(1);} 50%{opacity:1; transform:scale(1.3);}}
-  .topbar h1{font-family:var(--font-display); font-size:18px; margin:0; font-weight:600; letter-spacing:.02em;}
-  .topbar .sub{font-family:var(--font-mono); font-size:10px; color:var(--text-dim); margin-top:1px; letter-spacing:.03em; text-transform:uppercase;}
+  .topbar h1{font-family:var(--font-display); font-size:21px; margin:0; font-weight:600; letter-spacing:.02em;}
+  .topbar .sub{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); margin-top:1px; letter-spacing:.03em; text-transform:uppercase;}
   .back-btn{
     background:rgba(45,225,252,.08); border:1px solid var(--panel-border); color:var(--synapse);
-    padding:7px 14px; border-radius:20px; font-size:12px; font-family:var(--font-mono); letter-spacing:.02em;
+    padding:11px 18px; border-radius:20px; font-size:14px; font-family:var(--font-mono); letter-spacing:.02em;
   }
   .back-btn:active{background:rgba(45,225,252,.18);}
 
@@ -57,35 +57,54 @@
   .screen.active{display:block; animation:fade-in .35s ease;}
   @keyframes fade-in{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
 
-  .greeting{font-family:var(--font-display); font-size:24px; font-weight:600; margin:10px 0 3px; letter-spacing:-.01em;}
-  .date{font-family:var(--font-mono); font-size:11px; color:var(--text-dim); margin-bottom:20px; text-transform:uppercase; letter-spacing:.04em;}
+  .greeting{font-family:var(--font-display); font-size:28px; font-weight:600; margin:10px 0 3px; letter-spacing:-.01em;}
+  .date{font-family:var(--font-mono); font-size:13px; color:var(--text-dim); margin-bottom:20px; text-transform:uppercase; letter-spacing:.04em;}
 
   .glow-panel{
-    background:var(--panel); border:1px solid var(--panel-border); border-radius:16px;
-    padding:16px 18px; margin-bottom:12px; backdrop-filter:blur(12px);
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:18px;
+    padding:20px 22px; margin-bottom:14px; backdrop-filter:blur(12px);
     position:relative; overflow:hidden;
   }
   .glow-panel.state-alert{border-color:rgba(255,71,87,.35); box-shadow:0 0 24px rgba(255,71,87,.08), inset 0 0 40px rgba(255,71,87,.03);}
   .glow-panel.state-ok{border-color:rgba(45,225,252,.3); box-shadow:0 0 24px rgba(45,225,252,.08);}
-  .alert-line{display:flex; align-items:center; gap:10px; padding:6px 0; font-size:13px; line-height:1.4;}
+  .alert-line{display:flex; align-items:center; gap:12px; padding:9px 0; font-size:16px; line-height:1.4;}
   .alert-line:not(:last-child){border-bottom:1px solid rgba(255,255,255,.04);}
   .signal-dot{width:6px; height:6px; border-radius:50%; flex-shrink:0; box-shadow:0 0 8px currentColor;}
   .signal-dot.red{background:var(--alert); color:var(--alert);}
   .signal-dot.green{background:var(--synapse); color:var(--synapse);}
-  .alert-days{font-family:var(--font-mono); color:var(--text-dim); font-size:11px; margin-left:auto; flex-shrink:0;}
+  .alert-days{font-family:var(--font-mono); color:var(--text-dim); font-size:13px; margin-left:auto; flex-shrink:0;}
 
   .big-btn{
     width:100%; background:linear-gradient(135deg, var(--ignite), var(--alert));
-    color:#fff; border:none; border-radius:14px; padding:17px; font-size:15px; font-weight:600;
-    font-family:var(--font-display); margin-top:18px; letter-spacing:.01em;
+    color:#fff; border:none; border-radius:16px; padding:21px; font-size:18px; font-weight:600;
+    font-family:var(--font-display); margin-top:14px; letter-spacing:.01em;
     box-shadow:0 4px 24px rgba(255,122,41,.25); position:relative;
   }
   .big-btn:active{transform:scale(.98); box-shadow:0 2px 12px rgba(255,122,41,.2);}
+  .big-btn-secondary{
+    background:rgba(45,225,252,.1); border:1.5px solid rgba(45,225,252,.4); color:var(--synapse);
+    box-shadow:0 0 20px rgba(45,225,252,.1);
+  }
+  .big-btn-secondary:active{transform:scale(.98); box-shadow:0 0 12px rgba(45,225,252,.15);}
+  .view-card{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:18px;
+    padding:20px 22px; margin-bottom:14px; backdrop-filter:blur(12px);
+  }
+  .view-card h3{font-family:var(--font-display); font-size:17px; margin:0 0 8px; color:var(--text);}
+  .view-card .meta{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); margin-bottom:10px;}
+  .view-card .body-text{font-size:15px; line-height:1.6; color:#C8D4E5;}
+  .strategy-block{margin-bottom:16px;}
+  .strategy-h2{font-family:var(--font-display); font-size:18px; font-weight:700; color:var(--synapse); margin:22px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--panel-border);}
+  .strategy-h3{font-family:var(--font-display); font-size:15.5px; font-weight:600; color:var(--pulse); margin:16px 0 8px;}
+  .strategy-p{font-size:15px; line-height:1.65; color:#C8D4E5; margin:6px 0;}
+  .strategy-table{width:100%; border-collapse:collapse; margin:10px 0 16px; font-size:12.5px; overflow-x:auto; display:block;}
+  .strategy-table td{border:1px solid var(--panel-border); padding:8px 10px; color:#C8D4E5; white-space:nowrap;}
+  .strategy-table tr:first-child td{background:rgba(45,225,252,.08); font-weight:600; color:var(--synapse); font-family:var(--font-mono); font-size:11px; text-transform:uppercase;}
 
   .node-chain{position:relative; padding-left:4px;}
   .node-card{
-    background:var(--panel); border:1px solid var(--panel-border); border-radius:16px;
-    padding:16px 18px; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:18px;
+    padding:22px 20px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;
     backdrop-filter:blur(12px); position:relative;
   }
   .node-card:not(:last-child)::after{
@@ -94,62 +113,62 @@
   }
   .card-left{display:flex; align-items:center; gap:14px;}
   .card-icon-wrap{
-    width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center;
-    background:rgba(45,225,252,.08); border:1px solid rgba(45,225,252,.2); font-size:18px; flex-shrink:0;
+    width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+    background:rgba(45,225,252,.08); border:1px solid rgba(45,225,252,.2); font-size:23px; flex-shrink:0;
   }
-  .card-title{font-family:var(--font-display); font-size:15px; font-weight:600;}
-  .card-badge{font-family:var(--font-mono); font-size:10px; padding:4px 10px; border-radius:20px; font-weight:600; letter-spacing:.02em; text-transform:uppercase;}
+  .card-title{font-family:var(--font-display); font-size:18px; font-weight:600;}
+  .card-badge{font-family:var(--font-mono); font-size:11.5px; padding:6px 13px; border-radius:20px; font-weight:600; letter-spacing:.02em; text-transform:uppercase;}
   .badge-red{background:rgba(255,71,87,.12); color:var(--alert); border:1px solid rgba(255,71,87,.3);}
   .badge-green{background:rgba(45,225,252,.1); color:var(--synapse); border:1px solid rgba(45,225,252,.25);}
   .badge-gray{background:rgba(126,140,163,.1); color:var(--text-dim); border:1px solid rgba(126,140,163,.2);}
-  .chevron{color:var(--text-faint); font-size:16px; margin-left:10px;}
+  .chevron{color:var(--text-faint); font-size:22px; margin-left:10px;}
 
-  .section-title{font-family:var(--font-display); font-size:13px; font-weight:600; margin:20px 0 10px; color:var(--text); letter-spacing:.01em;}
+  .section-title{font-family:var(--font-display); font-size:15.5px; font-weight:600; margin:20px 0 10px; color:var(--text); letter-spacing:.01em;}
 
   .init-card{
-    background:var(--panel); border:1px solid var(--panel-border); border-radius:16px;
-    padding:16px; margin-bottom:12px; backdrop-filter:blur(12px); transition:border-color .3s;
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:18px;
+    padding:20px; margin-bottom:14px; backdrop-filter:blur(12px); transition:border-color .3s;
   }
   .init-card.stale{border-color:rgba(255,122,41,.3); box-shadow:0 0 20px rgba(255,122,41,.06);}
   .init-header{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;}
-  .init-name{font-family:var(--font-display); font-weight:600; font-size:15px;}
-  .init-carril{font-family:var(--font-mono); font-size:10px; color:var(--text-dim); margin-top:2px; text-transform:uppercase; letter-spacing:.03em;}
-  .init-days{font-family:var(--font-mono); font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; flex-shrink:0;}
+  .init-name{font-family:var(--font-display); font-weight:600; font-size:18px;}
+  .init-carril{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); margin-top:2px; text-transform:uppercase; letter-spacing:.03em;}
+  .init-days{font-family:var(--font-mono); font-size:13px; font-weight:600; padding:6px 13px; border-radius:20px; flex-shrink:0;}
   .init-next{
-    font-size:13px; color:#B8C4D9; margin-bottom:12px; background:rgba(45,225,252,.05);
+    font-size:15.5px; color:#B8C4D9; margin-bottom:14px; background:rgba(45,225,252,.05);
     border-left:2px solid var(--synapse); padding:9px 12px; border-radius:0 8px 8px 0; line-height:1.4;
   }
-  label{font-family:var(--font-mono); font-size:10px; color:var(--text-dim); font-weight:600; display:block; margin-bottom:5px; margin-top:10px; text-transform:uppercase; letter-spacing:.04em;}
+  label{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); font-weight:600; display:block; margin-bottom:5px; margin-top:10px; text-transform:uppercase; letter-spacing:.04em;}
   textarea, input[type=text]{
-    width:100%; border:1px solid var(--panel-border); border-radius:10px; padding:10px 12px;
-    font-size:14px; font-family:var(--font-body); resize:vertical; background:rgba(255,255,255,.02); color:var(--text);
+    width:100%; border:1px solid var(--panel-border); border-radius:12px; padding:14px 15px;
+    font-size:16px; font-family:var(--font-body); resize:vertical; background:rgba(255,255,255,.02); color:var(--text);
   }
   textarea:focus, input:focus{outline:none; border-color:var(--synapse); box-shadow:0 0 0 3px rgba(45,225,252,.1);}
-  textarea{min-height:52px;}
+  textarea{min-height:64px;}
   .worked-toggle{display:flex; gap:8px; margin-top:10px;}
   .toggle-btn{
-    flex:1; padding:10px; border-radius:10px; border:1px solid var(--panel-border); background:rgba(255,255,255,.02);
-    font-size:12.5px; font-weight:600; color:var(--text-dim); font-family:var(--font-body);
+    flex:1; padding:14px 8px; border-radius:12px; border:1px solid var(--panel-border); background:rgba(255,255,255,.02);
+    font-size:14.5px; font-weight:600; color:var(--text-dim); font-family:var(--font-body);
   }
   .toggle-btn.active{background:linear-gradient(135deg, var(--ignite), var(--alert)); color:#fff; border-color:transparent;}
   .save-btn{
-    width:100%; margin-top:12px; background:rgba(45,225,252,.1); color:var(--synapse); border:1px solid rgba(45,225,252,.35);
-    border-radius:10px; padding:11px; font-size:13.5px; font-weight:600; font-family:var(--font-display);
+    width:100%; margin-top:14px; background:rgba(45,225,252,.1); color:var(--synapse); border:1px solid rgba(45,225,252,.35);
+    border-radius:12px; padding:15px; font-size:16px; font-weight:600; font-family:var(--font-display);
   }
   .save-btn:disabled{opacity:.5;}
   .save-btn.saved{background:rgba(45,225,252,.2); color:var(--text);}
 
-  .book-card{background:var(--panel); border:1px solid var(--panel-border); border-radius:16px; padding:16px; margin-bottom:12px; backdrop-filter:blur(12px);}
-  .book-title{font-family:var(--font-display); font-weight:600; font-size:15px;}
-  .book-author{font-size:12px; color:var(--text-dim); margin-bottom:10px;}
-  .book-progress-current{font-family:var(--font-mono); font-size:12px; background:rgba(255,210,63,.08); color:var(--pulse); border:1px solid rgba(255,210,63,.25); padding:6px 12px; border-radius:20px; display:inline-block; margin-bottom:10px;}
+  .book-card{background:var(--panel); border:1px solid var(--panel-border); border-radius:18px; padding:20px; margin-bottom:14px; backdrop-filter:blur(12px);}
+  .book-title{font-family:var(--font-display); font-weight:600; font-size:18px;}
+  .book-author{font-size:14px; color:var(--text-dim); margin-bottom:12px;}
+  .book-progress-current{font-family:var(--font-mono); font-size:14px; background:rgba(255,210,63,.08); color:var(--pulse); border:1px solid rgba(255,210,63,.25); padding:6px 12px; border-radius:20px; display:inline-block; margin-bottom:10px;}
 
-  .asis-card{background:var(--panel); border:1px solid var(--panel-border); border-radius:14px; padding:14px 16px; margin-bottom:8px; backdrop-filter:blur(12px);}
+  .asis-card{background:var(--panel); border:1px solid var(--panel-border); border-radius:16px; padding:18px 20px; margin-bottom:10px; backdrop-filter:blur(12px);}
   .asis-top{display:flex; align-items:center; justify-content:space-between;}
-  .asis-name{font-family:var(--font-display); font-weight:600; font-size:13.5px;}
-  .asis-last{font-family:var(--font-mono); font-size:10px; color:var(--text-dim); margin-top:2px;}
+  .asis-name{font-family:var(--font-display); font-weight:600; font-size:17px;}
+  .asis-last{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); margin-top:2px;}
   .check-toggle{
-    width:26px; height:26px; border-radius:8px; border:1.5px solid var(--panel-border); display:flex;
+    width:32px; height:32px; border-radius:10px; border:1.5px solid var(--panel-border); display:flex;
     align-items:center; justify-content:center; font-size:14px; color:transparent; flex-shrink:0; transition:all .2s;
   }
   .check-toggle.checked{background:linear-gradient(135deg, var(--synapse), var(--circuit)); border-color:var(--synapse); color:#05070D; box-shadow:0 0 12px rgba(45,225,252,.4);}
@@ -158,13 +177,13 @@
 
   .mood-row{display:flex; gap:6px; margin-bottom:4px;}
   .mood-btn{
-    flex:1; padding:12px 4px; border-radius:12px; border:1px solid var(--panel-border);
-    background:rgba(255,255,255,.02); font-size:21px; text-align:center; transition:all .2s;
+    flex:1; padding:16px 4px; border-radius:14px; border:1px solid var(--panel-border);
+    background:rgba(255,255,255,.02); font-size:27px; text-align:center; transition:all .2s;
   }
   .mood-btn.active{background:linear-gradient(135deg, rgba(45,225,252,.2), rgba(11,61,92,.3)); border-color:var(--synapse); box-shadow:0 0 16px rgba(45,225,252,.2); transform:scale(1.06);}
-  .mood-label{font-family:var(--font-mono); font-size:9px; text-align:center; color:var(--text-faint); margin-top:3px; text-transform:uppercase;}
+  .mood-label{font-family:var(--font-mono); font-size:11px; text-align:center; color:var(--text-faint); margin-top:3px; text-transform:uppercase;}
   .emo-options{display:flex; flex-wrap:wrap; gap:7px;}
-  .emo-btn{padding:8px 14px; border-radius:20px; border:1px solid var(--panel-border); background:rgba(255,255,255,.02); font-size:12px; color:var(--text-dim); font-family:var(--font-body);}
+  .emo-btn{padding:11px 18px; border-radius:22px; border:1px solid var(--panel-border); background:rgba(255,255,255,.02); font-size:14.5px; color:var(--text-dim); font-family:var(--font-body);}
   .emo-btn.active{background:linear-gradient(135deg, var(--ignite), var(--pulse)); color:#05070D; border-color:transparent; font-weight:600;}
 
   .loading{text-align:center; padding:50px 20px; color:var(--text-dim); font-size:13px; font-family:var(--font-mono);}
@@ -191,7 +210,7 @@
       <div class="sub" id="topbar-sub">Strategic Advance Cockpit</div>
     </div>
   </div>
-  <button class="back-btn" id="back-btn" style="display:none" onclick="goHome()">← Menú</button>
+  <button class="back-btn" id="back-btn" style="display:none" onclick="handleBack()">← Menú</button>
 </div>
 
 <div class="container">
@@ -201,6 +220,7 @@
     <div class="date" id="today-date"></div>
     <div id="home-alerts"><div class="loading"><span class="spinner"></span>Sincronizando red...</div></div>
     <button class="big-btn" onclick="showScreen('menu')">📋 Registrar ayer</button>
+    <button class="big-btn big-btn-secondary" onclick="showScreen('consult-menu')">🔍 Consultar bases de datos</button>
   </div>
 
   <div class="screen" id="screen-menu">
@@ -257,6 +277,42 @@
     <textarea id="mood-note" placeholder="Algo que quieras anotar sobre ayer..."></textarea>
 
     <button class="save-btn" id="mood-save-btn" onclick="saveMood()" style="margin-top:16px">Guardar Mood de ayer</button>
+  </div>
+
+  <!-- SCREEN: CONSULTAR MENU -->
+  <div class="screen" id="screen-consult-menu">
+    <div class="node-chain">
+      <div class="node-card" onclick="viewIniciativas()">
+        <div class="card-left"><div class="card-icon-wrap">🎯</div><span class="card-title">Iniciativas</span></div>
+        <span class="chevron">›</span>
+      </div>
+      <div class="node-card" onclick="viewLibros()">
+        <div class="card-left"><div class="card-icon-wrap">📚</div><span class="card-title">Libros</span></div>
+        <span class="chevron">›</span>
+      </div>
+      <div class="node-card" onclick="viewAsistentes()">
+        <div class="card-left"><div class="card-icon-wrap">🛠️</div><span class="card-title">Asistentes</span></div>
+        <span class="chevron">›</span>
+      </div>
+      <div class="node-card" onclick="viewMood()">
+        <div class="card-left"><div class="card-icon-wrap">🌙</div><span class="card-title">Mood & Emociones</span></div>
+        <span class="chevron">›</span>
+      </div>
+      <div class="node-card" onclick="viewEstrategia()">
+        <div class="card-left"><div class="card-icon-wrap">📋</div><span class="card-title">Estrategia Semanal</span></div>
+        <span class="chevron">›</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: VISTA GENERICA (Iniciativas/Libros/Asistentes/Mood en solo lectura) -->
+  <div class="screen" id="screen-view">
+    <div id="view-content"><div class="loading"><span class="spinner"></span>Cargando...</div></div>
+  </div>
+
+  <!-- SCREEN: ESTRATEGIA SEMANAL -->
+  <div class="screen" id="screen-estrategia">
+    <div id="estrategia-content"><div class="loading"><span class="spinner"></span>Cargando estrategia semanal...</div></div>
   </div>
 
 </div>
@@ -468,6 +524,7 @@ const DB = {
   mood:        'd0ed5dd7c2f94a6d9c7dd85123b9f0d1',
   libros:      '759f6d6ddec94c1b9f264ead26722291',
 };
+const ESTRATEGIA_PAGE_ID = '36fcfff4-3a34-819e-9c56-cc2eb4f0d864';
 
 const ASISTENTES_FIJOS = [
   "Consultor Esp Ana","Photomator","Work Assistence","MOM Generator",
@@ -546,11 +603,19 @@ function showScreen(id){
   document.getElementById('back-btn').style.display = id==='home' ? 'none':'block';
   const titles = {home:['Fco.Logs','Strategic Advance Cockpit'], menu:['Registrar ayer','Elige qué actualizar'],
     iniciativas:['🎯 Iniciativas','¿En cuáles avanzaste ayer?'], libros:['📚 Libros','Progreso de lectura'],
-    asistentes:['🛠️ Asistentes','¿Cuáles usaste ayer?'], mood:['🌙 Mood & Emociones','¿Cómo estuvo tu día?']};
+    asistentes:['🛠️ Asistentes','¿Cuáles usaste ayer?'], mood:['🌙 Mood & Emociones','¿Cómo estuvo tu día?'],
+    'consult-menu':['Consultar','Elige qué revisar'], view:['Consulta','Vista de solo lectura'],
+    estrategia:['📋 Estrategia Semanal','Vista actual']};
   document.getElementById('topbar-title').textContent = titles[id][0];
   document.getElementById('topbar-sub').textContent = titles[id][1];
 }
 function goHome(){ showScreen('home'); loadHomeSummary(); }
+function handleBack(){
+  const viewScreens = ['view','estrategia'];
+  const current = document.querySelector('.screen.active').id.replace('screen-','');
+  if(viewScreens.includes(current)){ showScreen('consult-menu'); }
+  else { goHome(); }
+}
 
 async function loadHomeSummary(){
   document.getElementById('today-date').textContent = new Date().toLocaleDateString('es-MX',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
@@ -787,8 +852,7 @@ async function saveMood(){
     'Fecha': { title:[{text:{content:title}}] },
     'Mood AM': { select:{name: selectedMoodAM} },
     'Mood PM': { select:{name: selectedMoodPM} },
-    'date:Cuándo:is_datetime': 0,
-    'date:Cuándo:start': y,
+    'Cuándo': { date:{ start: y } },
   };
   if(selectedEmociones.size>0){
     props['Emociones del día'] = { multi_select: Array.from(selectedEmociones).map(n=>({name:n})) };
@@ -804,8 +868,10 @@ async function saveMood(){
     btn.classList.add('saved'); btn.textContent='✓ Guardado';
     toast('Mood de ayer guardado');
   } else {
-    btn.textContent='Error — reintentar'; btn.disabled=false;
-    console.error(res);
+    const errMsg = res.error || (res.details && JSON.stringify(res.details).substring(0,120)) || 'Error desconocido';
+    btn.textContent='Error: '+errMsg.substring(0,40); btn.disabled=false;
+    console.error('Notion error completo:', res);
+    toast('Error: '+errMsg.substring(0,60));
   }
 }
 
@@ -829,6 +895,134 @@ async function updateBadges(){
     document.getElementById('badge-mood').textContent = 'Registrar';
     document.getElementById('badge-mood').className = 'card-badge badge-gray';
   }catch(e){ console.error(e); }
+}
+
+// ====== CONSULTAR (SOLO LECTURA) ======
+async function notionGetPageContent(pageId){
+  const r = await fetch('/api/notion', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'getPageContent', pageId})
+  });
+  return r.json();
+}
+
+function richTextToHtml(rt){
+  if(!rt || !rt.length) return '';
+  return rt.map(t=>{
+    let s = (t.plain_text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    if(t.annotations?.bold) s = `<b>${s}</b>`;
+    return s;
+  }).join('');
+}
+
+function renderNotionBlocks(blocks){
+  let html = '';
+  let i = 0;
+  while(i < blocks.length){
+    const b = blocks[i];
+    const type = b.type;
+    if(type==='heading_1'||type==='heading_2'){
+      html += `<div class="strategy-h2">${richTextToHtml(b[type].rich_text)}</div>`;
+      i++;
+    } else if(type==='heading_3'){
+      html += `<div class="strategy-h3">${richTextToHtml(b[type].rich_text)}</div>`;
+      i++;
+    } else if(type==='paragraph'){
+      const txt = richTextToHtml(b.paragraph.rich_text);
+      if(txt.trim()) html += `<div class="strategy-p">${txt}</div>`;
+      i++;
+    } else if(type==='bulleted_list_item'||type==='numbered_list_item'){
+      html += `<div class="strategy-p">• ${richTextToHtml(b[type].rich_text)}</div>`;
+      i++;
+    } else if(type==='table'){
+      // Notion table blocks: children are table_row blocks (need separate fetch normally,
+      // but Notion often inlines them for small tables in the children response)
+      html += `<div style="overflow-x:auto"><table class="strategy-table">`;
+      // table rows come as children of this block in a separate call; skip gracefully if absent
+      html += `</table></div>`;
+      i++;
+    } else if(type==='divider'){
+      html += `<hr style="border:none;border-top:1px solid var(--panel-border);margin:16px 0">`;
+      i++;
+    } else if(type==='callout'){
+      html += `<div class="strategy-p" style="background:rgba(45,225,252,.06);padding:10px 14px;border-radius:10px;border-left:2px solid var(--synapse)">${richTextToHtml(b.callout.rich_text)}</div>`;
+      i++;
+    } else {
+      i++;
+    }
+  }
+  return html;
+}
+
+async function viewEstrategia(){
+  showScreen('estrategia');
+  const el = document.getElementById('estrategia-content');
+  el.innerHTML = `<div class="loading"><span class="spinner"></span>Cargando estrategia semanal...</div>`;
+  const res = await notionGetPageContent(ESTRATEGIA_PAGE_ID);
+  if(!res.ok){
+    el.innerHTML = `<div class="view-card"><div class="body-text">No se pudo cargar. ${res.error||''}</div></div>`;
+    return;
+  }
+  const html = renderNotionBlocks(res.blocks);
+  el.innerHTML = `<div class="view-card">${html || '<div class="body-text">Sin contenido visible (puede tener tablas anidadas que requieren vista completa en Notion).</div>'}</div>
+    <div style="text-align:center;margin-top:12px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint)">Vista simplificada · para el detalle completo abre Notion</span></div>`;
+}
+
+async function viewIniciativas(){
+  showScreen('view');
+  const el = document.getElementById('view-content');
+  el.innerHTML = `<div class="loading"><span class="spinner"></span>Cargando...</div>`;
+  const data = await notionQuery(DB.iniciativas);
+  const pages = (data.results||[]).sort((a,b)=>daysSince(getProp(b,'Última vez tocado'))-daysSince(getProp(a,'Última vez tocado')));
+  el.innerHTML = pages.map(p=>{
+    const name = getProp(p,'Iniciativa'); const carril = getProp(p,'Carril')||'';
+    const next = getProp(p,'Próxima acción mínima')||'—'; const last = getProp(p,'Última acción')||'—';
+    const d = daysSince(getProp(p,'Última vez tocado'));
+    return `<div class="view-card"><h3>${name}</h3><div class="meta">${carril} · hace ${d===999?'—':d+'d'}</div>
+      <div class="body-text"><b>Última:</b> ${last}<br><b>Próxima:</b> ${next}</div></div>`;
+  }).join('') || '<div class="loading">Sin datos.</div>';
+}
+async function viewLibros(){
+  showScreen('view');
+  const el = document.getElementById('view-content');
+  el.innerHTML = `<div class="loading"><span class="spinner"></span>Cargando...</div>`;
+  const data = await notionQuery(DB.libros);
+  const pages = data.results||[];
+  el.innerHTML = pages.map(p=>{
+    const title = getProp(p,'Título'); const estado = getProp(p,'Estado')||'';
+    const progress = getProp(p,'Progreso')||'—';
+    return `<div class="view-card"><h3>${title}</h3><div class="meta">${estado}</div>
+      <div class="body-text">📍 ${progress}</div></div>`;
+  }).join('') || '<div class="loading">Sin datos.</div>';
+}
+async function viewAsistentes(){
+  showScreen('view');
+  const el = document.getElementById('view-content');
+  el.innerHTML = `<div class="loading"><span class="spinner"></span>Cargando...</div>`;
+  const data = await notionQuery(DB.asistentes);
+  const pages = data.results||[];
+  el.innerHTML = ASISTENTES_FIJOS.map(name=>{
+    const p = pages.find(pg=>getProp(pg,'Asistente')===name);
+    const last = p ? getProp(p,'Última vez utilizado') : null;
+    const d = daysSince(last);
+    return `<div class="view-card"><h3>${name}</h3><div class="meta">${last?`Último uso hace ${d}d`:'Sin registro'}</div></div>`;
+  }).join('');
+}
+async function viewMood(){
+  showScreen('view');
+  const el = document.getElementById('view-content');
+  el.innerHTML = `<div class="loading"><span class="spinner"></span>Cargando...</div>`;
+  const data = await notionQuery(DB.mood);
+  const pages = (data.results||[]).sort((a,b)=>{
+    const da = getProp(a,'Cuándo')||''; const db_ = getProp(b,'Cuándo')||'';
+    return db_.localeCompare(da);
+  }).slice(0,10);
+  el.innerHTML = pages.map(p=>{
+    const fecha = getProp(p,'Fecha')||''; const am = getProp(p,'Mood AM')||''; const pm = getProp(p,'Mood PM')||'';
+    const emo = getProp(p,'Emociones del día'); const emoStr = Array.isArray(emo) ? emo.join(', ') : (emo||'');
+    return `<div class="view-card"><h3>${fecha}</h3><div class="meta">AM: ${am}  ·  PM: ${pm}</div>
+      <div class="body-text">${emoStr}</div></div>`;
+  }).join('') || '<div class="loading">Sin datos.</div>';
 }
 
 loadHomeSummary();
