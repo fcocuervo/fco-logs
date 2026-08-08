@@ -94,6 +94,21 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  // GET PAGE CONTENT — leer bloques de una página (ej. Estrategia Semanal)
+  if (action === 'getPageContent') {
+    if (!pageId) return res.status(400).json({ error: 'Missing pageId' });
+    try {
+      const response = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children?page_size=100`, {
+        headers: { 'Authorization': `Bearer ${NOTION_TOKEN}`, 'Notion-Version': '2022-06-28' }
+      });
+      const data = await response.json();
+      if (!response.ok) return res.status(response.status).json({ error: data.message || 'Notion error', details: data });
+      return res.status(200).json({ ok: true, blocks: data.results || [] });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   // DEFAULT: QUERY — leer una base de datos
   if (!dbId) return res.status(400).json({ error: 'Missing dbId' });
 
