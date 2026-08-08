@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Fco.Logs</title>
+<style>
+  :root{
+    --dark:#1A1A2E; --accent:#E94560; --gray:#888; --light:#F7F7F7;
+    --green:#1D9E75; --divider:#E5E5E5; --orange:#BA7517;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#fff; color:var(--dark); padding-bottom:70px;}
+  .topbar{background:var(--dark); color:#fff; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100;}
+  .topbar h1{font-size:17px; margin:0; font-weight:600;}
+  .topbar .sub{font-size:11px; color:#aaa; margin-top:2px;}
+  .back-btn{background:rgba(255,255,255,.1); border:none; color:#fff; padding:6px 12px; border-radius:6px; font-size:13px;}
+  .container{padding:14px; max-width:600px; margin:0 auto;}
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  /* HOME */
+  .greeting{font-size:20px; font-weight:700; margin:4px 0 2px;}
+  .date{font-size:13px; color:var(--gray); margin-bottom:16px;}
+  .alert-box{background:#FCE4EC; border:1px solid #F5B5C5; border-radius:10px; padding:12px 14px; margin-bottom:10px; font-size:13px; line-height:1.5;}
+  .alert-box.ok{background:#E8F5E9; border-color:#B5E0C0;}
+  .big-btn{width:100%; background:var(--accent); color:#fff; border:none; border-radius:12px; padding:16px; font-size:16px; font-weight:600; margin-top:16px;}
+  .big-btn:active{opacity:.85;}
+
+  /* MENU CARDS */
+  .card{background:#fff; border:1px solid var(--divider); border-radius:12px; padding:14px 16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;}
+  .card-left{display:flex; align-items:center; gap:12px;}
+  .card-icon{font-size:24px;}
+  .card-title{font-size:15px; font-weight:600;}
+  .card-badge{font-size:11px; padding:3px 8px; border-radius:20px; font-weight:600;}
+  .badge-red{background:#FCE4EC; color:var(--accent);}
+  .badge-green{background:#E8F5E9; color:var(--green);}
+  .badge-gray{background:var(--light); color:var(--gray);}
+  .chevron{color:#ccc; font-size:18px;}
+
+  /* INICIATIVAS */
+  .init-card{border:1px solid var(--divider); border-radius:12px; padding:14px; margin-bottom:12px;}
+  .init-card.stale{border-left:3px solid var(--accent);}
+  .init-header{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;}
+  .init-name{font-weight:600; font-size:15px;}
+  .init-carril{font-size:11px; color:var(--gray);}
+  .init-days{font-size:11px; font-weight:600; padding:2px 8px; border-radius:10px;}
+  .init-next{font-size:13px; color:#555; margin-bottom:10px; background:var(--light); padding:8px 10px; border-radius:8px;}
+  label{font-size:12px; color:var(--gray); font-weight:600; display:block; margin-bottom:4px; margin-top:8px;}
+  textarea, input[type=text]{width:100%; border:1px solid var(--divider); border-radius:8px; padding:9px 10px; font-size:14px; font-family:inherit; resize:vertical;}
+  textarea{min-height:50px;}
+  .worked-toggle{display:flex; gap:8px; margin-top:8px;}
+  .toggle-btn{flex:1; padding:9px; border-radius:8px; border:1px solid var(--divider); background:#fff; font-size:13px; font-weight:600; color:var(--gray);}
+  .toggle-btn.active{background:var(--dark); color:#fff; border-color:var(--dark);}
+  .save-btn{width:100%; margin-top:10px; background:var(--green); color:#fff; border:none; border-radius:8px; padding:10px; font-size:14px; font-weight:600;}
+  .save-btn:disabled{background:#ccc;}
+  .save-btn.saved{background:var(--gray);}
+
+  /* LIBROS */
+  .book-card{border:1px solid var(--divider); border-radius:12px; padding:14px; margin-bottom:12px;}
+  .book-title{font-weight:600; font-size:15px;}
+  .book-author{font-size:12px; color:var(--gray); margin-bottom:8px;}
+  .book-progress-current{font-size:13px; background:var(--light); padding:6px 10px; border-radius:8px; display:inline-block; margin-bottom:8px;}
+
+  /* ASISTENTES */
+  .asis-card{border:1px solid var(--divider); border-radius:10px; padding:12px 14px; margin-bottom:8px;}
+  .asis-top{display:flex; align-items:center; justify-content:space-between;}
+  .asis-name{font-weight:600; font-size:14px;}
+  .asis-last{font-size:11px; color:var(--gray);}
+  .check-toggle{width:26px; height:26px; border-radius:6px; border:2px solid var(--divider); display:flex; align-items:center; justify-content:center; font-size:16px; color:#fff; flex-shrink:0;}
+  .check-toggle.checked{background:var(--green); border-color:var(--green);}
+  .asis-note{margin-top:8px; display:none;}
+  .asis-note.show{display:block;}
+
+  /* MOOD */
+  .section-title{font-size:14px; font-weight:700; margin:18px 0 8px; color:var(--dark);}
+  .mood-row{display:flex; gap:6px; margin-bottom:6px;}
+  .mood-btn{flex:1; padding:10px 4px; border-radius:8px; border:1px solid var(--divider); background:#fff; font-size:20px; text-align:center;}
+  .mood-btn.active{background:var(--dark); border-color:var(--dark);}
+  .mood-label{font-size:10px; text-align:center; color:var(--gray); margin-top:2px;}
+  .emo-cat{margin-bottom:14px;}
+  .emo-cat-title{font-size:12px; font-weight:700; margin-bottom:6px;}
+  .emo-options{display:flex; flex-wrap:wrap; gap:6px;}
+  .emo-btn{padding:7px 12px; border-radius:20px; border:1px solid var(--divider); background:#fff; font-size:12px; color:#555;}
+  .emo-btn.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+
+  .loading{text-align:center; padding:40px 20px; color:var(--gray); font-size:14px;}
+  .spinner{display:inline-block; width:20px; height:20px; border:2px solid var(--divider); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:8px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--dark); color:#fff; padding:10px 20px; border-radius:20px; font-size:13px; z-index:999; display:none;}
+</style>
+</head>
+<body>
+
+<div class="topbar" id="topbar">
+  <div>
+    <h1 id="topbar-title">Fco.Logs</h1>
+    <div class="sub" id="topbar-sub">Strategic Advance Cockpit</div>
+  </div>
+  <button class="back-btn" id="back-btn" style="display:none" onclick="goHome()">← Menú</button>
+</div>
+
+<div class="container">
+
+  <!-- SCREEN: HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="greeting" id="greeting">Buenos días, Francisco</div>
+    <div class="date" id="today-date"></div>
+    <div id="home-alerts"><div class="loading"><span class="spinner"></span>Cargando resumen...</div></div>
+    <button class="big-btn" onclick="showScreen('menu')">📋 Registrar ayer</button>
+  </div>
+
+  <!-- SCREEN: MENU -->
+  <div class="screen" id="screen-menu">
+    <div class="card" onclick="openIniciativas()">
+      <div class="card-left"><span class="card-icon">🎯</span><span class="card-title">Iniciativas</span></div>
+      <div style="display:flex;align-items:center;gap:8px"><span class="card-badge" id="badge-init">...</span><span class="chevron">›</span></div>
+    </div>
+    <div class="card" onclick="openLibros()">
+      <div class="card-left"><span class="card-icon">📚</span><span class="card-title">Libros</span></div>
+      <div style="display:flex;align-items:center;gap:8px"><span class="card-badge" id="badge-libros">...</span><span class="chevron">›</span></div>
+    </div>
+    <div class="card" onclick="openAsistentes()">
+      <div class="card-left"><span class="card-icon">🛠️</span><span class="card-title">Asistentes</span></div>
+      <div style="display:flex;align-items:center;gap:8px"><span class="card-badge" id="badge-asis">...</span><span class="chevron">›</span></div>
+    </div>
+    <div class="card" onclick="openMood()">
+      <div class="card-left"><span class="card-icon">🌙</span><span class="card-title">Mood & Emociones</span></div>
+      <div style="display:flex;align-items:center;gap:8px"><span class="card-badge" id="badge-mood">...</span><span class="chevron">›</span></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: INICIATIVAS -->
+  <div class="screen" id="screen-iniciativas">
+    <div id="init-list"><div class="loading"><span class="spinner"></span>Cargando iniciativas...</div></div>
+  </div>
+
+  <!-- SCREEN: LIBROS -->
+  <div class="screen" id="screen-libros">
+    <div id="libros-list"><div class="loading"><span class="spinner"></span>Cargando libros...</div></div>
+  </div>
+
+  <!-- SCREEN: ASISTENTES -->
+  <div class="screen" id="screen-asistentes">
+    <div id="asis-list"><div class="loading"><span class="spinner"></span>Cargando asistentes...</div></div>
+  </div>
+
+  <!-- SCREEN: MOOD -->
+  <div class="screen" id="screen-mood">
+    <div class="section-title" style="margin-top:0">Mood AM</div>
+    <div class="mood-row" id="mood-am-row"></div>
+    <div class="section-title">Mood PM</div>
+    <div class="mood-row" id="mood-pm-row"></div>
+
+    <div class="section-title">⚡ Energía alta</div>
+    <div class="emo-cat"><div class="emo-options" id="emo-energia"></div></div>
+    <div class="section-title" style="margin-top:8px">💪 Fuerza interna</div>
+    <div class="emo-cat"><div class="emo-options" id="emo-fuerza"></div></div>
+    <div class="section-title" style="margin-top:8px">❤️ Relacional</div>
+    <div class="emo-cat"><div class="emo-options" id="emo-relacional"></div></div>
+    <div class="section-title" style="margin-top:8px">🔍 Claridad</div>
+    <div class="emo-cat"><div class="emo-options" id="emo-claridad"></div></div>
+    <div class="section-title" style="margin-top:8px">🌿 Paz</div>
+    <div class="emo-cat"><div class="emo-options" id="emo-paz"></div></div>
+
+    <label style="margin-top:14px">Nota del día (opcional)</label>
+    <textarea id="mood-note" placeholder="Algo que quieras anotar sobre ayer..."></textarea>
+
+    <button class="save-btn" id="mood-save-btn" onclick="saveMood()">Guardar Mood de ayer</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ====== CONFIG ======
+const DB = {
+  iniciativas: 'cdcbec7142a64566ad00fa5915ca42e1',
+  asistentes:  'b25ad8c0007f4f578390911c9ceee09e',
+  mood:        'd0ed5dd7c2f94a6d9c7dd85123b9f0d1',
+  libros:      '759f6d6ddec94c1b9f264ead26722291',
+};
+
+const ASISTENTES_FIJOS = [
+  "Consultor Esp Ana","Photomator","Work Assistence","MOM Generator",
+  "CV Creator","Asesor de Salud FCO","Jet Lack","USD/MXN Analizer"
+];
+
+const EMOCIONES = {
+  energia:    ["alegría","entusiasmo","pasión","emocionado","activo","diversión","deleite","entretenido"],
+  fuerza:     ["empoderado","orgulloso","fuerte","valentía","confiado","respeto propio","valioso"],
+  relacional: ["amor","apreciación","gratitud","amable"],
+  claridad:   ["enfocado","curioso","interés","inspirado","convicción","esperanza","optimismo"],
+  paz:        ["relajado","tranquilo","libertad","felicidad"],
+};
+
+const MOODS = [
+  {v:"😎 Great", label:"Great"}, {v:"🙂 Good", label:"Good"}, {v:"😐 Okay", label:"Okay"},
+  {v:"😕 Not good", label:"Not good"}, {v:"😣 Awful", label:"Awful"}
+];
+
+// ====== STATE ======
+let stateIniciativas = [];
+let stateLibros = [];
+let stateAsistentes = [];
+let selectedMoodAM = null, selectedMoodPM = null;
+let selectedEmociones = new Set();
+
+function yesterdayStr(){
+  const d = new Date(); d.setDate(d.getDate()-1);
+  return d.toISOString().split('T')[0];
+}
+function daysSince(dateStr){
+  if(!dateStr) return 999;
+  const then = new Date(dateStr); const now = new Date();
+  return Math.floor((now-then)/86400000);
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display='block';
+  setTimeout(()=>t.style.display='none', 2200);
+}
+
+// ====== API ======
+async function notionQuery(dbId, filter){
+  const r = await fetch('/api/notion', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({dbId, ...(filter?{filter}:{})})
+  });
+  return r.json();
+}
+async function notionUpdate(pageId, properties){
+  const r = await fetch('/api/notion', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'updatePage', pageId, properties})
+  });
+  return r.json();
+}
+async function notionCreate(dbId, properties){
+  const r = await fetch('/api/notion', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'createPage', dbId, properties})
+  });
+  return r.json();
+}
+async function notionAppend(pageId, heading, body){
+  const r = await fetch('/api/notion', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'appendContent', pageId, content:{heading, body}})
+  });
+  return r.json();
+}
+
+function getProp(page, name){
+  const p = page.properties[name]; if(!p) return null;
+  if(p.type==='title') return p.title?.[0]?.plain_text || '';
+  if(p.type==='rich_text') return p.rich_text?.[0]?.plain_text || '';
+  if(p.type==='select') return p.select?.name || null;
+  if(p.type==='multi_select') return (p.multi_select||[]).map(o=>o.name);
+  if(p.type==='date') return p.date?.start || null;
+  return null;
+}
+
+// ====== NAVIGATION ======
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  document.getElementById('back-btn').style.display = id==='home' ? 'none':'block';
+  const titles = {home:['Fco.Logs','Strategic Advance Cockpit'], menu:['Registrar ayer','Elige qué actualizar'],
+    iniciativas:['🎯 Iniciativas','¿En cuáles avanzaste ayer?'], libros:['📚 Libros','Progreso de lectura'],
+    asistentes:['🛠️ Asistentes','¿Cuáles usaste ayer?'], mood:['🌙 Mood & Emociones','¿Cómo estuvo tu día?']};
+  document.getElementById('topbar-title').textContent = titles[id][0];
+  document.getElementById('topbar-sub').textContent = titles[id][1];
+}
+function goHome(){ showScreen('home'); loadHomeSummary(); }
+
+// ====== HOME SUMMARY ======
+async function loadHomeSummary(){
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('es-MX',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const data = await notionQuery(DB.iniciativas);
+  const pages = data.results || [];
+  const stale = pages.filter(p=>{
+    const estado = getProp(p,'Estado');
+    if(estado==='Backburner'||estado==='Completado') return false;
+    return daysSince(getProp(p,'Última vez tocado')) >= 7;
+  }).sort((a,b)=>daysSince(getProp(b,'Última vez tocado'))-daysSince(getProp(a,'Última vez tocado')));
+
+  const box = document.getElementById('home-alerts');
+  if(stale.length===0){
+    box.innerHTML = `<div class="alert-box ok">✅ Todas tus iniciativas activas se han tocado esta semana.</div>`;
+  } else {
+    const items = stale.slice(0,4).map(p=>{
+      const name = getProp(p,'Iniciativa');
+      const d = daysSince(getProp(p,'Última vez tocado'));
+      return `<div>🔴 <b>${name}</b> — ${d} días sin tocar</div>`;
+    }).join('');
+    box.innerHTML = `<div class="alert-box">${items}</div>`;
+  }
+}
+
+// ====== INICIATIVAS ======
+async function openIniciativas(){
+  showScreen('iniciativas');
+  const data = await notionQuery(DB.iniciativas);
+  stateIniciativas = (data.results||[]).sort((a,b)=>{
+    const da = getProp(a,'Estado')==='Backburner' ? 1 : 0;
+    const db_ = getProp(b,'Estado')==='Backburner' ? 1 : 0;
+    if(da!==db_) return da-db_;
+    return daysSince(getProp(b,'Última vez tocado')) - daysSince(getProp(a,'Última vez tocado'));
+  });
+  renderIniciativas();
+}
+function renderIniciativas(){
+  const html = stateIniciativas.map(p=>{
+    const id = p.id;
+    const name = getProp(p,'Iniciativa');
+    const carril = getProp(p,'Carril') || '';
+    const estado = getProp(p,'Estado');
+    const next = getProp(p,'Próxima acción mínima') || '(sin definir)';
+    const last = getProp(p,'Última acción') || '';
+    const d = daysSince(getProp(p,'Última vez tocado'));
+    const isBackburner = estado==='Backburner';
+    const dayColor = d>=14 ? '#FCE4EC;color:#E94560' : d>=7 ? '#FFF3E0;color:#BA7517' : '#E8F5E9;color:#1D9E75';
+    return `
+    <div class="init-card ${d>=7&&!isBackburner?'stale':''}" id="init-${id}">
+      <div class="init-header">
+        <div>
+          <div class="init-name">${name} ${isBackburner?'⏸️':''}</div>
+          <div class="init-carril">${carril}${isBackburner?' · Backburner':''}</div>
+        </div>
+        <div class="init-days" style="background:${dayColor.split(';')[0]};color:${dayColor.split('color:')[1]}">${d===999?'—':d+'d'}</div>
+      </div>
+      <div class="init-next">💡 ${next}</div>
+      <div class="worked-toggle">
+        <button class="toggle-btn" id="btn-no-${id}" onclick="setWorked('${id}', false)">No la toqué</button>
+        <button class="toggle-btn" id="btn-yes-${id}" onclick="setWorked('${id}', true)">✅ Sí avancé</button>
+      </div>
+      <div id="fields-${id}" style="display:none">
+        <label>¿Qué hiciste?</label>
+        <textarea id="last-${id}" placeholder="Ej: avancé la letra del son...">${last}</textarea>
+        <label>Próxima acción mínima (actualiza si cambió)</label>
+        <input type="text" id="next-${id}" value="${next==='(sin definir)'?'':next}">
+      </div>
+      <button class="save-btn" id="save-${id}" onclick="saveIniciativa('${id}')" style="display:none">Guardar</button>
+    </div>`;
+  }).join('');
+  document.getElementById('init-list').innerHTML = html;
+}
+function setWorked(id, worked){
+  document.getElementById('btn-yes-'+id).classList.toggle('active', worked);
+  document.getElementById('btn-no-'+id).classList.toggle('active', !worked);
+  document.getElementById('fields-'+id).style.display = worked ? 'block' : 'none';
+  document.getElementById('save-'+id).style.display = 'block';
+  document.getElementById('init-'+id).dataset.worked = worked;
+}
+async function saveIniciativa(id){
+  const btn = document.getElementById('save-'+id);
+  const worked = document.getElementById('init-'+id).dataset.worked === 'true';
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  const props = {};
+  if(worked){
+    const lastVal = document.getElementById('last-'+id).value;
+    const nextVal = document.getElementById('next-'+id).value;
+    props['Última acción'] = { rich_text:[{text:{content:lastVal}}] };
+    props['Próxima acción mínima'] = { rich_text:[{text:{content:nextVal}}] };
+    props['Última vez tocado'] = { date:{start: yesterdayStr()} };
+  }
+  const res = await notionUpdate(id, props);
+  if(res.ok){
+    btn.classList.add('saved'); btn.textContent = '✓ Guardado';
+    toast('Iniciativa actualizada');
+  } else {
+    btn.textContent = 'Error — reintentar'; btn.disabled=false;
+  }
+}
+
+// ====== LIBROS ======
+async function openLibros(){
+  showScreen('libros');
+  const data = await notionQuery(DB.libros);
+  stateLibros = (data.results||[]).filter(p=>getProp(p,'Estado')==='📖 Leyendo');
+  renderLibros();
+}
+function renderLibros(){
+  if(stateLibros.length===0){
+    document.getElementById('libros-list').innerHTML = `<div class="loading">No tienes libros en estado "Leyendo" ahora mismo.</div>`;
+    return;
+  }
+  const html = stateLibros.map(p=>{
+    const id = p.id;
+    const title = getProp(p,'Título');
+    const author = getProp(p,'Autor') || '';
+    const progress = getProp(p,'Progreso') || '';
+    return `
+    <div class="book-card">
+      <div class="book-title">${title}</div>
+      <div class="book-author">${author}</div>
+      <div class="book-progress-current">📍 Vas en: ${progress||'(sin registrar)'}</div>
+      <label>Nuevo progreso (ej. Cap. 15)</label>
+      <input type="text" id="prog-${id}" value="${progress}" oninput="document.getElementById('save-book-${id}').style.display='block'">
+      <button class="save-btn" id="save-book-${id}" onclick="saveLibro('${id}')" style="display:none">Guardar</button>
+    </div>`;
+  }).join('');
+  document.getElementById('libros-list').innerHTML = html;
+}
+async function saveLibro(id){
+  const btn = document.getElementById('save-book-'+id);
+  btn.disabled=true; btn.textContent='Guardando...';
+  const val = document.getElementById('prog-'+id).value;
+  const res = await notionUpdate(id, {
+    'Progreso': { rich_text:[{text:{content:val}}] },
+    'Última vez leído': { date:{start: yesterdayStr()} }
+  });
+  if(res.ok){ btn.classList.add('saved'); btn.textContent='✓ Guardado'; toast('Progreso guardado'); }
+  else { btn.textContent='Error'; btn.disabled=false; }
+}
+
+// ====== ASISTENTES ======
+async function openAsistentes(){
+  showScreen('asistentes');
+  const data = await notionQuery(DB.asistentes);
+  stateAsistentes = data.results || [];
+  renderAsistentes();
+}
+function renderAsistentes(){
+  const html = ASISTENTES_FIJOS.map(name=>{
+    const page = stateAsistentes.find(p=>getProp(p,'Asistente')===name);
+    const id = page ? page.id : null;
+    const lastDate = page ? getProp(page,'Última vez utilizado') : null;
+    const d = daysSince(lastDate);
+    return `
+    <div class="asis-card">
+      <div class="asis-top" onclick="toggleAsis('${id}')">
+        <div>
+          <div class="asis-name">${name}</div>
+          <div class="asis-last">${lastDate ? `Último uso: hace ${d} días` : 'Sin registro'}</div>
+        </div>
+        <div class="check-toggle" id="check-${id}">✓</div>
+      </div>
+      <div class="asis-note" id="note-wrap-${id}">
+        <textarea id="note-${id}" placeholder="¿Para qué lo usaste?"></textarea>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('asis-list').innerHTML = html + `<button class="save-btn" style="margin-top:8px" onclick="saveAsistentes()">Guardar asistentes usados</button>`;
+}
+function toggleAsis(id){
+  const chk = document.getElementById('check-'+id);
+  const noteWrap = document.getElementById('note-wrap-'+id);
+  chk.classList.toggle('checked');
+  noteWrap.classList.toggle('show', chk.classList.contains('checked'));
+}
+async function saveAsistentes(){
+  let count = 0;
+  for(const name of ASISTENTES_FIJOS){
+    const page = stateAsistentes.find(p=>getProp(p,'Asistente')===name);
+    if(!page) continue;
+    const id = page.id;
+    const chk = document.getElementById('check-'+id);
+    if(chk && chk.classList.contains('checked')){
+      const note = document.getElementById('note-'+id).value || '(sin detalle)';
+      await notionUpdate(id, { 'Última vez utilizado': { date:{start: yesterdayStr()} } });
+      await notionAppend(id, yesterdayStr(), note);
+      count++;
+    }
+  }
+  toast(count>0 ? `${count} asistente(s) guardado(s)` : 'Ninguno marcado como usado');
+}
+
+// ====== MOOD ======
+function openMood(){
+  showScreen('mood');
+  renderMoodButtons('mood-am-row', 'am');
+  renderMoodButtons('mood-pm-row', 'pm');
+  renderEmociones();
+}
+function renderMoodButtons(containerId, which){
+  const html = MOODS.map(m=>`
+    <div style="flex:1">
+      <button class="mood-btn" onclick="selectMood('${which}','${m.v}')" id="mood-${which}-${m.v.split(' ')[1]}">${m.v.split(' ')[0]}</button>
+      <div class="mood-label">${m.label}</div>
+    </div>`).join('');
+  document.getElementById(containerId).innerHTML = html;
+}
+function selectMood(which, value){
+  const key = value.split(' ')[1];
+  document.querySelectorAll(`[id^="mood-${which}-"]`).forEach(b=>b.classList.remove('active'));
+  document.getElementById(`mood-${which}-${key}`).classList.add('active');
+  if(which==='am') selectedMoodAM = value; else selectedMoodPM = value;
+}
+function renderEmociones(){
+  const map = {energia:'emo-energia', fuerza:'emo-fuerza', relacional:'emo-relacional', claridad:'emo-claridad', paz:'emo-paz'};
+  for(const [cat, containerId] of Object.entries(map)){
+    const html = EMOCIONES[cat].map(e=>`<button class="emo-btn" onclick="toggleEmocion('${e}', this)">${e}</button>`).join('');
+    document.getElementById(containerId).innerHTML = html;
+  }
+}
+function toggleEmocion(e, btn){
+  btn.classList.toggle('active');
+  if(selectedEmociones.has(e)) selectedEmociones.delete(e); else selectedEmociones.add(e);
+}
+async function saveMood(){
+  const btn = document.getElementById('mood-save-btn');
+  if(!selectedMoodAM || !selectedMoodPM){ toast('Selecciona Mood AM y PM'); return; }
+  btn.disabled=true; btn.textContent='Guardando...';
+  const y = yesterdayStr();
+  const dayName = new Date(y+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long'});
+  const title = `${y} - ${dayName.charAt(0).toUpperCase()+dayName.slice(1)}`;
+  const note = document.getElementById('mood-note').value;
+
+  const props = {
+    'Fecha': { title:[{text:{content:title}}] },
+    'Mood AM': { select:{name: selectedMoodAM} },
+    'Mood PM': { select:{name: selectedMoodPM} },
+    'date:Cuándo:is_datetime': 0,
+    'date:Cuándo:start': y,
+  };
+  if(selectedEmociones.size>0){
+    props['Emociones del día'] = { multi_select: Array.from(selectedEmociones).map(n=>({name:n})) };
+  }
+  if(note) props['Nota del día'] = { rich_text:[{text:{content:note}}] };
+
+  // createPage usa formato de propiedades "crudo" via nuestro proxy -> reusamos updatePage-style pero con action createPage
+  const r = await fetch('/api/notion', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'createPage', dbId: DB.mood, properties: props})
+  });
+  const res = await r.json();
+  if(res.ok){
+    btn.classList.add('saved'); btn.textContent='✓ Guardado';
+    toast('Mood de ayer guardado');
+  } else {
+    btn.textContent='Error — reintentar'; btn.disabled=false;
+    console.error(res);
+  }
+}
+
+// ====== INIT ======
+async function updateBadges(){
+  try{
+    const [iData, lData, aData] = await Promise.all([
+      notionQuery(DB.iniciativas), notionQuery(DB.libros), notionQuery(DB.asistentes)
+    ]);
+    const stale = (iData.results||[]).filter(p=>{
+      const e=getProp(p,'Estado'); if(e==='Backburner'||e==='Completado') return false;
+      return daysSince(getProp(p,'Última vez tocado'))>=7;
+    }).length;
+    document.getElementById('badge-init').textContent = stale>0 ? `${stale} atrasadas` : 'Al día';
+    document.getElementById('badge-init').className = 'card-badge ' + (stale>0?'badge-red':'badge-green');
+
+    const leyendo = (lData.results||[]).filter(p=>getProp(p,'Estado')==='📖 Leyendo').length;
+    document.getElementById('badge-libros').textContent = `${leyendo} activo(s)`;
+    document.getElementById('badge-libros').className = 'card-badge badge-gray';
+
+    document.getElementById('badge-asis').textContent = '8 disponibles';
+    document.getElementById('badge-asis').className = 'card-badge badge-gray';
+
+    document.getElementById('badge-mood').textContent = 'Registrar';
+    document.getElementById('badge-mood').className = 'card-badge badge-gray';
+  }catch(e){ console.error(e); }
+}
+
+loadHomeSummary();
+updateBadges();
+</script>
+</body>
+</html>
