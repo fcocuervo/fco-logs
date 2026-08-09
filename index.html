@@ -86,6 +86,33 @@
     box-shadow:0 0 20px rgba(45,225,252,.1);
   }
   .big-btn-secondary:active{transform:scale(.98); box-shadow:0 0 12px rgba(45,225,252,.15);}
+  .big-btn-green{
+    background:rgba(57,255,140,.1); border:1.5px solid rgba(57,255,140,.5); color:#39FF8C;
+    box-shadow:0 0 24px rgba(57,255,140,.15);
+  }
+  .big-btn-green:active{transform:scale(.98); box-shadow:0 0 12px rgba(57,255,140,.15);}
+  .plan-item{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:16px;
+    padding:16px 18px; margin-bottom:10px; backdrop-filter:blur(12px); display:flex; align-items:center; gap:14px;
+    transition:all .25s;
+  }
+  .plan-item.done{opacity:.45; border-color:rgba(57,255,140,.3);}
+  .plan-checkbox{
+    width:30px; height:30px; border-radius:9px; border:2px solid rgba(57,255,140,.5); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:17px; color:transparent; transition:all .2s;
+  }
+  .plan-checkbox.checked{background:#39FF8C; border-color:#39FF8C; color:#05070D; box-shadow:0 0 14px rgba(57,255,140,.5);}
+  .plan-time{font-family:var(--font-mono); font-size:12px; color:var(--pulse); font-weight:600; min-width:76px;}
+  .plan-item.done .plan-time{color:var(--text-faint);}
+  .plan-text{font-size:15px; flex:1; line-height:1.35;}
+  .plan-item.done .plan-text{text-decoration:line-through; color:var(--text-dim);}
+  .priorities-panel{
+    background:linear-gradient(135deg, rgba(255,122,41,.08), rgba(255,71,87,.05));
+    border:1px solid rgba(255,122,41,.25); border-radius:16px; padding:16px 18px; margin-bottom:14px;
+  }
+  .priorities-title{font-family:var(--font-display); font-size:13px; font-weight:700; color:var(--ignite); margin-bottom:10px; text-transform:uppercase; letter-spacing:.03em;}
+  .priority-row{display:flex; gap:10px; padding:6px 0; font-size:14px; line-height:1.4; color:#E8EEF5;}
+  .priority-num{font-family:var(--font-mono); font-weight:700; color:var(--pulse); flex-shrink:0;}
   .view-card{
     background:var(--panel); border:1px solid var(--panel-border); border-radius:18px;
     padding:20px 22px; margin-bottom:14px; backdrop-filter:blur(12px);
@@ -221,6 +248,7 @@
     <div id="home-alerts"><div class="loading"><span class="spinner"></span>Sincronizando red...</div></div>
     <button class="big-btn" onclick="showScreen('menu')">📋 Registrar ayer</button>
     <button class="big-btn big-btn-secondary" onclick="showScreen('consult-menu')">🔍 Consultar bases de datos</button>
+    <button class="big-btn big-btn-green" onclick="openPlanHoy()">✅ Plan de Hoy</button>
   </div>
 
   <div class="screen" id="screen-menu">
@@ -313,6 +341,11 @@
   <!-- SCREEN: ESTRATEGIA SEMANAL -->
   <div class="screen" id="screen-estrategia">
     <div id="estrategia-content"><div class="loading"><span class="spinner"></span>Cargando estrategia semanal...</div></div>
+  </div>
+
+  <!-- SCREEN: PLAN DE HOY -->
+  <div class="screen" id="screen-plan-hoy">
+    <div id="plan-hoy-content"><div class="loading"><span class="spinner"></span>Leyendo el plan de hoy desde Notion...</div></div>
   </div>
 
 </div>
@@ -605,13 +638,13 @@ function showScreen(id){
     iniciativas:['🎯 Iniciativas','¿En cuáles avanzaste ayer?'], libros:['📚 Libros','Progreso de lectura'],
     asistentes:['🛠️ Asistentes','¿Cuáles usaste ayer?'], mood:['🌙 Mood & Emociones','¿Cómo estuvo tu día?'],
     'consult-menu':['Consultar','Elige qué revisar'], view:['Consulta','Vista de solo lectura'],
-    estrategia:['📋 Estrategia Semanal','Vista actual']};
+    estrategia:['📋 Estrategia Semanal','Vista actual'], 'plan-hoy':['✅ Plan de Hoy','Marca lo que vayas completando']};
   document.getElementById('topbar-title').textContent = titles[id][0];
   document.getElementById('topbar-sub').textContent = titles[id][1];
 }
 function goHome(){ showScreen('home'); loadHomeSummary(); }
 function handleBack(){
-  const viewScreens = ['view','estrategia'];
+  const viewScreens = ['view','estrategia','plan-hoy'];
   const current = document.querySelector('.screen.active').id.replace('screen-','');
   if(viewScreens.includes(current)){ showScreen('consult-menu'); }
   else { goHome(); }
@@ -1025,8 +1058,105 @@ async function viewMood(){
   }).join('') || '<div class="loading">Sin datos.</div>';
 }
 
+// ====== NOTION TABLE PARSING ======
+function blockText(block){
+  const type = block.type;
+  const rt = block[type]?.rich_text;
+  return rt ? richTextToHtml(rt).replace(/<[^>]+>/g,'') : '';
+}
+
+async function parseTableRows(tableBlockId){
+  const res = await notionGetPageContent(tableBlockId);
+  if(!res.ok) return [];
+  return res.blocks.filter(b=>b.type==='table_row').map(row=>{
+    return row.table_row.cells.map(cell=>
+      cell.map(t=>t.plain_text||'').join('')
+    );
+  });
+}
+
+function findHeadingIdx(blocks, matcher){
+  return blocks.findIndex(b=>{
+    if(!['heading_1','heading_2','heading_3'].includes(b.type)) return false;
+    const txt = blockText(b);
+    return matcher(txt);
+  });
+}
+
+async function extractSection(blocks, matcher){
+  const idx = findHeadingIdx(blocks, matcher);
+  if(idx===-1) return null;
+  // buscar el siguiente table block después de este heading
+  for(let i=idx+1; i<blocks.length; i++){
+    if(['heading_1','heading_2'].includes(blocks[i].type)) break; // tope de sección
+    if(blocks[i].type==='table'){
+      const rows = await parseTableRows(blocks[i].id);
+      return rows;
+    }
+  }
+  return null;
+}
+
+// ====== PLAN DE HOY (checklist desde Notion) ======
+async function openPlanHoy(){
+  showScreen('plan-hoy');
+  const el = document.getElementById('plan-hoy-content');
+  el.innerHTML = `<div class="loading"><span class="spinner"></span>Leyendo el plan de hoy desde Notion...</div>`;
+  const res = await notionGetPageContent(ESTRATEGIA_PAGE_ID);
+  if(!res.ok){
+    el.innerHTML = `<div class="view-card"><div class="body-text">No se pudo cargar: ${res.error||''}</div></div>`;
+    return;
+  }
+  const rows = await extractSection(res.blocks, txt => /^hoy\s*[—-]/i.test(txt.trim()));
+  if(!rows || rows.length<2){
+    el.innerHTML = `<div class="view-card"><div class="body-text">No encontré la tabla "Hoy — ..." en la Estrategia Semanal. Verifica que Claude ya haya actualizado el plan de hoy en Notion.</div></div>`;
+    return;
+  }
+  const todayKey = new Date().toISOString().split('T')[0];
+  const storageKey = 'planhoy_'+todayKey;
+  let checked = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+  // primera fila = encabezados (Horario/Actividad/Vinculado a) -> se ignora
+  const items = rows.slice(1).filter(r=>r[0] && r[1]);
+  el.innerHTML = items.map((r,i)=>{
+    const isDone = !!checked[i];
+    return `<div class="plan-item ${isDone?'done':''}" id="plan-item-${i}" onclick="togglePlanItem(${i},'${storageKey}')">
+      <div class="plan-checkbox ${isDone?'checked':''}" id="plan-check-${i}">✓</div>
+      <div style="flex:1">
+        <div class="plan-time">${r[0]}</div>
+        <div class="plan-text">${r[1]}</div>
+      </div>
+    </div>`;
+  }).join('') || '<div class="loading">Sin actividades listadas.</div>';
+}
+function togglePlanItem(i, storageKey){
+  let checked = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  checked[i] = !checked[i];
+  localStorage.setItem(storageKey, JSON.stringify(checked));
+  document.getElementById('plan-item-'+i).classList.toggle('done', checked[i]);
+  document.getElementById('plan-check-'+i).classList.toggle('checked', checked[i]);
+}
+
+// ====== TOP 3 PRIORIDADES en Home ======
+async function loadPrioritiesPanel(){
+  try{
+    const res = await notionGetPageContent(ESTRATEGIA_PAGE_ID);
+    if(!res.ok) return;
+    const rows = await extractSection(res.blocks, txt => /top\s*3\s*priorid/i.test(txt));
+    if(!rows || rows.length<2) return;
+    const items = rows.slice(1).filter(r=>r[0]);
+    if(items.length===0) return;
+    const html = items.map((r,i)=>`<div class="priority-row"><span class="priority-num">P${i+1}</span><span>${r.slice(1).join(' — ')||r[0]}</span></div>`).join('');
+    const panel = document.createElement('div');
+    panel.className = 'priorities-panel';
+    panel.innerHTML = `<div class="priorities-title">🔴 Top 3 Prioridades — Semana</div>${html}`;
+    document.getElementById('home-alerts').insertAdjacentElement('afterend', panel);
+  }catch(e){ console.error('priorities load error', e); }
+}
+
 loadHomeSummary();
 updateBadges();
+loadPrioritiesPanel();
 </script>
 </body>
 </html>
