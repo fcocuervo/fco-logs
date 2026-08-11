@@ -556,6 +556,7 @@ const DB = {
   asistentes:  'b25ad8c0007f4f578390911c9ceee09e',
   mood:        'd0ed5dd7c2f94a6d9c7dd85123b9f0d1',
   libros:      '759f6d6ddec94c1b9f264ead26722291',
+  planDiario:  '32e7e7e54a54459994453956a6682ef2',
 };
 const ESTRATEGIA_PAGE_ID = '36fcfff4-3a34-819e-9c56-cc2eb4f0d864';
 
@@ -1097,44 +1098,56 @@ async function extractSection(blocks, matcher){
   return null;
 }
 
-// ====== PLAN DE HOY (checklist desde Notion) ======
+// ====== PLAN DE HOY (checklist desde base de datos Plan Diario) ======
+let planHoyItems = [];
 async function openPlanHoy(){
   showScreen('plan-hoy');
   const el = document.getElementById('plan-hoy-content');
-  el.innerHTML = `<div class="loading"><span class="spinner"></span>Leyendo el plan de hoy desde Notion...</div>`;
-  const res = await notionGetPageContent(ESTRATEGIA_PAGE_ID);
-  if(!res.ok){
-    el.innerHTML = `<div class="view-card"><div class="body-text">No se pudo cargar: ${res.error||''}</div></div>`;
+  el.innerHTML = `<div class="loading"><span class="spinner"></span>Cargando plan de hoy...</div>`;
+  const todayStr = new Date().toISOString().split('T')[0];
+  const data = await notionQuery(DB.planDiario, {
+    property: 'Fecha', date: { equals: todayStr }
+  });
+  if(!data.results){
+    el.innerHTML = `<div class="view-card"><div class="body-text">No se pudo cargar: ${data.error||'error desconocido'}</div></div>`;
     return;
   }
-  const rows = await extractSection(res.blocks, txt => /^hoy\s*[—-]/i.test(txt.trim()));
-  if(!rows || rows.length<2){
-    el.innerHTML = `<div class="view-card"><div class="body-text">No encontré la tabla "Hoy — ..." en la Estrategia Semanal. Verifica que Claude ya haya actualizado el plan de hoy en Notion.</div></div>`;
+  planHoyItems = data.results.sort((a,b)=>{
+    const ha = getProp(a,'Hora')||''; const hb = getProp(b,'Hora')||'';
+    return ha.localeCompare(hb);
+  });
+  if(planHoyItems.length===0){
+    el.innerHTML = `<div class="view-card"><div class="body-text">Sin actividades para hoy en Plan Diario todavía. Pídele a Claude que suba el plan de hoy.</div></div>`;
     return;
   }
-  const todayKey = new Date().toISOString().split('T')[0];
-  const storageKey = 'planhoy_'+todayKey;
-  let checked = JSON.parse(localStorage.getItem(storageKey) || '{}');
-
-  // primera fila = encabezados (Horario/Actividad/Vinculado a) -> se ignora
-  const items = rows.slice(1).filter(r=>r[0] && r[1]);
-  el.innerHTML = items.map((r,i)=>{
-    const isDone = !!checked[i];
-    return `<div class="plan-item ${isDone?'done':''}" id="plan-item-${i}" onclick="togglePlanItem(${i},'${storageKey}')">
-      <div class="plan-checkbox ${isDone?'checked':''}" id="plan-check-${i}">✓</div>
+  el.innerHTML = planHoyItems.map((p,i)=>{
+    const hora = getProp(p,'Hora')||'';
+    const actividad = getProp(p,'Actividad')||'';
+    const hecho = p.properties['Hecho']?.checkbox === true;
+    return `<div class="plan-item ${hecho?'done':''}" id="plan-item-${i}" onclick="togglePlanItem(${i})">
+      <div class="plan-checkbox ${hecho?'checked':''}" id="plan-check-${i}">✓</div>
       <div style="flex:1">
-        <div class="plan-time">${r[0]}</div>
-        <div class="plan-text">${r[1]}</div>
+        <div class="plan-time">${hora}</div>
+        <div class="plan-text">${actividad}</div>
       </div>
     </div>`;
-  }).join('') || '<div class="loading">Sin actividades listadas.</div>';
+  }).join('');
 }
-function togglePlanItem(i, storageKey){
-  let checked = JSON.parse(localStorage.getItem(storageKey) || '{}');
-  checked[i] = !checked[i];
-  localStorage.setItem(storageKey, JSON.stringify(checked));
-  document.getElementById('plan-item-'+i).classList.toggle('done', checked[i]);
-  document.getElementById('plan-check-'+i).classList.toggle('checked', checked[i]);
+async function togglePlanItem(i){
+  const item = planHoyItems[i];
+  const currentlyDone = item.properties['Hecho']?.checkbox === true;
+  const newVal = !currentlyDone;
+  // optimistic UI update
+  document.getElementById('plan-item-'+i).classList.toggle('done', newVal);
+  document.getElementById('plan-check-'+i).classList.toggle('checked', newVal);
+  item.properties['Hecho'] = { checkbox: newVal };
+  const res = await notionUpdate(item.id, { 'Hecho': { checkbox: newVal } });
+  if(!res.ok){
+    // revertir si falla
+    document.getElementById('plan-item-'+i).classList.toggle('done', currentlyDone);
+    document.getElementById('plan-check-'+i).classList.toggle('checked', currentlyDone);
+    toast('Error al guardar — reintenta');
+  }
 }
 
 // ====== TOP 3 PRIORIDADES en Home ======
