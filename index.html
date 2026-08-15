@@ -269,6 +269,10 @@
         <div class="card-left"><div class="card-icon-wrap">🌙</div><span class="card-title">Mood & Emociones</span></div>
         <div style="display:flex;align-items:center"><span class="card-badge" id="badge-mood">...</span><span class="chevron">›</span></div>
       </div>
+      <div class="node-card" onclick="openSkincare()">
+        <div class="card-left"><div class="card-icon-wrap">🧴</div><span class="card-title">Skin Care</span></div>
+        <div style="display:flex;align-items:center"><span class="card-badge" id="badge-skincare">...</span><span class="chevron">›</span></div>
+      </div>
     </div>
   </div>
 
@@ -330,6 +334,10 @@
         <div class="card-left"><div class="card-icon-wrap">📋</div><span class="card-title">Estrategia Semanal</span></div>
         <span class="chevron">›</span>
       </div>
+      <div class="node-card" onclick="viewSkincare()">
+        <div class="card-left"><div class="card-icon-wrap">🧴</div><span class="card-title">Skin Care</span></div>
+        <span class="chevron">›</span>
+      </div>
     </div>
   </div>
 
@@ -346,6 +354,11 @@
   <!-- SCREEN: PLAN DE HOY -->
   <div class="screen" id="screen-plan-hoy">
     <div id="plan-hoy-content"><div class="loading"><span class="spinner"></span>Leyendo el plan de hoy desde Notion...</div></div>
+  </div>
+
+  <!-- SCREEN: SKIN CARE (registro) -->
+  <div class="screen" id="screen-skincare">
+    <div id="skincare-content"><div class="loading"><span class="spinner"></span>Cargando...</div></div>
   </div>
 
 </div>
@@ -557,7 +570,9 @@ const DB = {
   mood:        'd0ed5dd7c2f94a6d9c7dd85123b9f0d1',
   libros:      '759f6d6ddec94c1b9f264ead26722291',
   planDiario:  '32e7e7e54a54459994453956a6682ef2',
+  skincare:    'fe5b9a8cdbca46449b2a916badd49d4f',
 };
+const ALERT_SIGNALS = ["Enrojecimiento","Ardor/picazón","Descamación","Sensibilidad","Ninguna"];
 const ESTRATEGIA_PAGE_ID = '36fcfff4-3a34-819e-9c56-cc2eb4f0d864';
 
 const ASISTENTES_FIJOS = [
@@ -639,15 +654,18 @@ function showScreen(id){
     iniciativas:['🎯 Iniciativas','¿En cuáles avanzaste ayer?'], libros:['📚 Libros','Progreso de lectura'],
     asistentes:['🛠️ Asistentes','¿Cuáles usaste ayer?'], mood:['🌙 Mood & Emociones','¿Cómo estuvo tu día?'],
     'consult-menu':['Consultar','Elige qué revisar'], view:['Consulta','Vista de solo lectura'],
-    estrategia:['📋 Estrategia Semanal','Vista actual'], 'plan-hoy':['✅ Plan de Hoy','Marca lo que vayas completando']};
+    estrategia:['📋 Estrategia Semanal','Vista actual'], 'plan-hoy':['✅ Plan de Hoy','Marca lo que vayas completando'],
+    skincare:['🧴 Skin Care','Rutina de ayer']};
   document.getElementById('topbar-title').textContent = titles[id][0];
   document.getElementById('topbar-sub').textContent = titles[id][1];
 }
 function goHome(){ showScreen('home'); loadHomeSummary(); }
 function handleBack(){
   const viewScreens = ['view','estrategia','plan-hoy'];
+  const registerScreens = ['skincare'];
   const current = document.querySelector('.screen.active').id.replace('screen-','');
   if(viewScreens.includes(current)){ showScreen('consult-menu'); }
+  else if(registerScreens.includes(current)){ showScreen('menu'); }
   else { goHome(); }
 }
 
@@ -928,6 +946,9 @@ async function updateBadges(){
 
     document.getElementById('badge-mood').textContent = 'Registrar';
     document.getElementById('badge-mood').className = 'card-badge badge-gray';
+
+    document.getElementById('badge-skincare').textContent = 'Registrar';
+    document.getElementById('badge-skincare').className = 'card-badge badge-gray';
   }catch(e){ console.error(e); }
 }
 
@@ -1151,20 +1172,142 @@ async function togglePlanItem(i){
 }
 
 // ====== TOP 3 PRIORIDADES en Home ======
+// Nota: las prioridades se escriben en Notion como VIÑETAS de texto bajo el heading
+// "Top 3 Prioridades" (NO como tabla) — por eso se extraen bulleted_list_item/paragraph,
+// no se busca un bloque 'table' (bug real corregido 15 ago 2026: antes agarraba por error
+// la siguiente tabla real de la página, que es el horario del día).
 async function loadPrioritiesPanel(){
   try{
     const res = await notionGetPageContent(ESTRATEGIA_PAGE_ID);
     if(!res.ok) return;
-    const rows = await extractSection(res.blocks, txt => /top\s*3\s*priorid/i.test(txt));
-    if(!rows || rows.length<2) return;
-    const items = rows.slice(1).filter(r=>r[0]);
+    const blocks = res.blocks;
+    const idx = findHeadingIdx(blocks, txt => /top\s*3\s*priorid/i.test(txt));
+    if(idx===-1) return;
+    const STOP_TYPES = ['heading_1','heading_2','heading_3','table','divider'];
+    const items = [];
+    for(let i=idx+1; i<blocks.length; i++){
+      if(STOP_TYPES.includes(blocks[i].type)) break;
+      if(['bulleted_list_item','numbered_list_item','paragraph'].includes(blocks[i].type)){
+        const txt = blockText(blocks[i]);
+        if(txt.trim()) items.push(txt.trim());
+      }
+    }
     if(items.length===0) return;
-    const html = items.map((r,i)=>`<div class="priority-row"><span class="priority-num">P${i+1}</span><span>${r.slice(1).join(' — ')||r[0]}</span></div>`).join('');
+    const html = items.slice(0,3).map((txt,i)=>`<div class="priority-row"><span class="priority-num">P${i+1}</span><span>${txt.replace(/^P\d\s*[—-]\s*/,'')}</span></div>`).join('');
     const panel = document.createElement('div');
     panel.className = 'priorities-panel';
     panel.innerHTML = `<div class="priorities-title">🔴 Top 3 Prioridades — Semana</div>${html}`;
     document.getElementById('home-alerts').insertAdjacentElement('afterend', panel);
   }catch(e){ console.error('priorities load error', e); }
+}
+
+// ====== SKIN CARE ======
+let skincareTodayItem = null;
+async function openSkincare(){
+  showScreen('skincare');
+  const el = document.getElementById('skincare-content');
+  el.innerHTML = `<div class="loading"><span class="spinner"></span>Cargando rutina de ayer...</div>`;
+  const y = yesterdayStr();
+  const data = await notionQuery(DB.skincare, { property: 'Fecha', date: { equals: y } });
+  if(!data.results || data.results.length===0){
+    el.innerHTML = `<div class="view-card"><div class="body-text">No hay fila de Skin Care para ayer (${y}) en Notion. Verifica el rango de fechas de la base.</div></div>`;
+    return;
+  }
+  const item = data.results[0];
+  skincareTodayItem = item;
+  const fase = getProp(item,'Fase')||'';
+  const semana = item.properties['Semana del programa']?.number ?? '';
+  const rutinaAM = getProp(item,'Rutina AM esperada')||'—';
+  const rutinaPM = getProp(item,'Rutina PM esperada')||'—';
+  const amDone = item.properties['AM Completado']?.checkbox === true;
+  const pmDone = item.properties['PM Completado']?.checkbox === true;
+  const minAM = item.properties['Minoxidil AM']?.checkbox === true;
+  const minPM = item.properties['Minoxidil PM']?.checkbox === true;
+  const alertas = getProp(item,'Señales de alerta') || [];
+
+  el.innerHTML = `
+    <div class="view-card">
+      <h3>${fase} ${semana?'· Semana '+semana:''}</h3>
+      <div class="meta">Rutina esperada de ayer</div>
+      <div class="body-text"><b>AM:</b> ${rutinaAM}<br><b>PM:</b> ${rutinaPM}</div>
+    </div>
+
+    <div class="asis-card" onclick="toggleSkinCheck('amDone')">
+      <div class="asis-top"><div class="asis-name">☀️ Rutina AM completada</div>
+      <div class="check-toggle ${amDone?'checked':''}" id="skin-check-amDone">✓</div></div>
+    </div>
+    <div class="asis-card" onclick="toggleSkinCheck('pmDone')">
+      <div class="asis-top"><div class="asis-name">🌙 Rutina PM completada</div>
+      <div class="check-toggle ${pmDone?'checked':''}" id="skin-check-pmDone">✓</div></div>
+    </div>
+    <div class="asis-card" onclick="toggleSkinCheck('minAM')">
+      <div class="asis-top"><div class="asis-name">💊 Minoxidil AM</div>
+      <div class="check-toggle ${minAM?'checked':''}" id="skin-check-minAM">✓</div></div>
+    </div>
+    <div class="asis-card" onclick="toggleSkinCheck('minPM')">
+      <div class="asis-top"><div class="asis-name">💊 Minoxidil PM</div>
+      <div class="check-toggle ${minPM?'checked':''}" id="skin-check-minPM">✓</div></div>
+    </div>
+
+    <label style="margin-top:16px">Señales de alerta (toca las que apliquen)</label>
+    <div class="emo-options" id="skin-alertas">
+      ${ALERT_SIGNALS.map(s=>`<button class="emo-btn ${alertas.includes(s)?'active':''}" onclick="this.classList.toggle('active')">${s}</button>`).join('')}
+    </div>
+
+    <label style="margin-top:16px">Notas</label>
+    <textarea id="skin-notas" placeholder="Cualquier observación...">${getProp(item,'Notas')||''}</textarea>
+
+    <button class="save-btn" id="skin-save-btn" onclick="saveSkincare()" style="margin-top:16px">Guardar Skin Care de ayer</button>
+  `;
+  // estado local de checkboxes
+  window._skinState = {amDone, pmDone, minAM, minPM};
+}
+function toggleSkinCheck(key){
+  window._skinState[key] = !window._skinState[key];
+  document.getElementById('skin-check-'+key).classList.toggle('checked', window._skinState[key]);
+}
+async function saveSkincare(){
+  const btn = document.getElementById('skin-save-btn');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  const alertBtns = document.querySelectorAll('#skin-alertas .emo-btn.active');
+  const alertas = Array.from(alertBtns).map(b=>b.textContent);
+  const notas = document.getElementById('skin-notas').value;
+  const props = {
+    'AM Completado': { checkbox: window._skinState.amDone },
+    'PM Completado': { checkbox: window._skinState.pmDone },
+    'Minoxidil AM': { checkbox: window._skinState.minAM },
+    'Minoxidil PM': { checkbox: window._skinState.minPM },
+    'Notas': { rich_text: [{ text: { content: notas } }] },
+  };
+  if(alertas.length>0){
+    props['Señales de alerta'] = { multi_select: alertas.map(n=>({name:n})) };
+  }
+  const res = await notionUpdate(skincareTodayItem.id, props);
+  if(res.ok){
+    btn.classList.add('saved'); btn.textContent='✓ Guardado';
+    toast('Skin Care guardado');
+  } else {
+    btn.textContent='Error — reintentar'; btn.disabled=false;
+    toast('Error: '+(res.error||'desconocido'));
+  }
+}
+async function viewSkincare(){
+  showScreen('view');
+  const el = document.getElementById('view-content');
+  el.innerHTML = `<div class="loading"><span class="spinner"></span>Cargando...</div>`;
+  const data = await notionQuery(DB.skincare);
+  const pages = (data.results||[]).sort((a,b)=>{
+    const da = getProp(a,'Fecha')||''; const db_ = getProp(b,'Fecha')||'';
+    return db_.localeCompare(da);
+  }).slice(0,10);
+  el.innerHTML = pages.map(p=>{
+    const dia = getProp(p,'Día')||''; const fase = getProp(p,'Fase')||'';
+    const am = p.properties['AM Completado']?.checkbox===true ? '✅' : '⬜';
+    const pm = p.properties['PM Completado']?.checkbox===true ? '✅' : '⬜';
+    const alertas = getProp(p,'Señales de alerta')||[];
+    return `<div class="view-card"><h3>${dia}</h3><div class="meta">${fase}</div>
+      <div class="body-text">AM ${am} · PM ${pm}${alertas.length?' · ⚠️ '+alertas.join(', '):''}</div></div>`;
+  }).join('') || '<div class="loading">Sin datos.</div>';
 }
 
 loadHomeSummary();
