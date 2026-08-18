@@ -1410,14 +1410,31 @@ async function selectHabitosMonth(idx){
   const startStr = `${year}-${pad2(month)}-01`;
   const endStr = `${year}-${pad2(month)}-${pad2(nDays)}`;
 
-  const [planData, skinData, moodData] = await Promise.all([
-    notionQuery(DB.planDiario, {and:[{property:'Fecha',date:{on_or_after:startStr}},{property:'Fecha',date:{on_or_before:endStr}}]}),
-    notionQuery(DB.skincare,   {and:[{property:'Fecha',date:{on_or_after:startStr}},{property:'Fecha',date:{on_or_before:endStr}}]}),
-    notionQuery(DB.mood,       {and:[{property:'Cuándo',date:{on_or_after:startStr}},{property:'Cuándo',date:{on_or_before:endStr}}]}),
-  ]);
+  let planData, skinData, moodData;
+  try{
+    [planData, skinData, moodData] = await Promise.all([
+      notionQuery(DB.planDiario, {and:[{property:'Fecha',date:{on_or_after:startStr}},{property:'Fecha',date:{on_or_before:endStr}}]}),
+      notionQuery(DB.skincare,   {and:[{property:'Fecha',date:{on_or_after:startStr}},{property:'Fecha',date:{on_or_before:endStr}}]}),
+      notionQuery(DB.mood,       {and:[{property:'Cuándo',date:{on_or_after:startStr}},{property:'Cuándo',date:{on_or_before:endStr}}]}),
+    ]);
+  }catch(e){
+    el.innerHTML = `<div class="h-panel"><div class="body-text" style="color:var(--alert)">Error de red al consultar Notion: ${e.message}</div></div>`;
+    return;
+  }
+  // Diagnostico visible si alguna consulta falló (Notion devolvió error en vez de results)
+  const errs = [];
+  if(!planData.results) errs.push('Plan Diario: '+(planData.error||JSON.stringify(planData)).toString().substring(0,150));
+  if(!skinData.results) errs.push('Skin Care: '+(skinData.error||JSON.stringify(skinData)).toString().substring(0,150));
+  if(!moodData.results) errs.push('Daily Mood: '+(moodData.error||JSON.stringify(moodData)).toString().substring(0,150));
+  if(errs.length>0){
+    el.innerHTML = `<div class="h-panel"><div class="body-text" style="color:var(--alert)">Errores de consulta:<br>${errs.join('<br>')}</div></div>`;
+    console.error('Habitos query errors', {planData, skinData, moodData});
+    return;
+  }
   const planRows = planData.results||[];
   const skinRows = skinData.results||[];
   const moodRows = moodData.results||[];
+  console.log('DEBUG Habitos', {mes:month, planRowsCount:planRows.length, skinRowsCount:skinRows.length, moodRowsCount:moodRows.length, planRows});
 
   // matrix[habitKey][day] = true/false
   const matrix = {};
