@@ -113,6 +113,43 @@
   .priorities-title{font-family:var(--font-display); font-size:13px; font-weight:700; color:var(--ignite); margin-bottom:10px; text-transform:uppercase; letter-spacing:.03em;}
   .priority-row{display:flex; gap:10px; padding:6px 0; font-size:14px; line-height:1.4; color:#E8EEF5;}
   .priority-num{font-family:var(--font-mono); font-weight:700; color:var(--pulse); flex-shrink:0;}
+
+  /* HABITOS */
+  .month-tab{
+    font-family:var(--font-mono); font-size:12px; padding:8px 16px; border-radius:20px;
+    border:1px solid var(--panel-border); background:rgba(255,255,255,.02); color:var(--text-dim);
+    white-space:nowrap; flex-shrink:0;
+  }
+  .month-tab.active{background:linear-gradient(135deg, rgba(45,225,252,.2), rgba(11,61,92,.3)); border-color:var(--synapse); color:var(--text); box-shadow:0 0 12px rgba(45,225,252,.2);}
+  .stats-row{display:flex; gap:10px; margin-bottom:14px;}
+  .stat-card{flex:1; background:var(--panel); border:1px solid var(--panel-border); border-radius:16px; padding:14px 10px; text-align:center; backdrop-filter:blur(12px);}
+  .stat-value{font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--synapse); text-shadow:0 0 16px rgba(45,225,252,.5);}
+  .stat-value.orange{color:var(--ignite); text-shadow:0 0 16px rgba(255,122,41,.5);}
+  .stat-value.green{color:#39FF8C; text-shadow:0 0 16px rgba(57,255,140,.5);}
+  .stat-label{font-family:var(--font-mono); font-size:9px; color:var(--text-dim); margin-top:4px; text-transform:uppercase;}
+  .h-panel{background:var(--panel); border:1px solid var(--panel-border); border-radius:18px; padding:16px 14px; margin-bottom:14px; backdrop-filter:blur(12px);}
+  .h-panel-title{font-family:var(--font-display); font-size:13.5px; font-weight:600; margin-bottom:12px; display:flex; align-items:center; gap:8px;}
+  .h-dot{width:7px;height:7px;border-radius:50%;background:var(--synapse);box-shadow:0 0 8px var(--synapse); flex-shrink:0;}
+  .chart-wrap{position:relative; height:100px;}
+  .weekly-bars{display:flex; align-items:flex-end; gap:6px; height:80px; margin-top:6px;}
+  .week-bar-col{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;}
+  .week-bar{width:100%; border-radius:6px 6px 3px 3px; min-height:2px;}
+  .week-bar-label{font-family:var(--font-mono); font-size:9px; color:var(--text-dim); margin-top:6px;}
+  .week-bar-pct{font-family:var(--font-mono); font-size:9px; color:var(--text); margin-bottom:4px; font-weight:600;}
+  .grid-scroll{overflow-x:auto; margin:0 -2px;}
+  .habit-grid{border-collapse:collapse; font-size:11px;}
+  .habit-grid th{font-family:var(--font-mono); font-size:8.5px; color:var(--text-dim); padding:3px 2px; font-weight:500; text-align:center; min-width:20px;}
+  .habit-grid td.hn{text-align:left; min-width:110px; font-family:var(--font-body); font-size:11.5px; color:var(--text); padding-right:8px; position:sticky; left:0; background:#0d1420;}
+  .habit-grid td{padding:2px;}
+  .check-cell{width:16px; height:16px; border-radius:4px; display:inline-flex; align-items:center; justify-content:center; font-size:9px; border:1px solid var(--panel-border);}
+  .check-cell.on{background:linear-gradient(135deg, var(--synapse), var(--circuit)); box-shadow:0 0 6px rgba(45,225,252,.4); color:#05070D; border:none;}
+  .check-cell.off{background:rgba(255,255,255,.02);}
+  .habit-row{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.04);}
+  .habit-row:last-child{border-bottom:none;}
+  .habit-row-name{flex:1; font-size:13px;}
+  .habit-bar-bg{width:70px; height:6px; border-radius:3px; background:rgba(255,255,255,.06); overflow:hidden;}
+  .habit-bar-fill{height:100%; border-radius:3px;}
+  .habit-row-pct{font-family:var(--font-mono); font-size:11.5px; font-weight:600; width:34px; text-align:right;}
   .view-card{
     background:var(--panel); border:1px solid var(--panel-border); border-radius:18px;
     padding:20px 22px; margin-bottom:14px; backdrop-filter:blur(12px);
@@ -338,6 +375,10 @@
         <div class="card-left"><div class="card-icon-wrap">🧴</div><span class="card-title">Skin Care</span></div>
         <span class="chevron">›</span>
       </div>
+      <div class="node-card" onclick="openHabitos()">
+        <div class="card-left"><div class="card-icon-wrap">📊</div><span class="card-title">Hábitos — Análisis mensual</span></div>
+        <span class="chevron">›</span>
+      </div>
     </div>
   </div>
 
@@ -359,6 +400,12 @@
   <!-- SCREEN: SKIN CARE (registro) -->
   <div class="screen" id="screen-skincare">
     <div id="skincare-content"><div class="loading"><span class="spinner"></span>Cargando...</div></div>
+  </div>
+
+  <!-- SCREEN: HABITOS (analisis mensual) -->
+  <div class="screen" id="screen-habitos">
+    <div id="month-tabs" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:4px;"></div>
+    <div id="habitos-content"><div class="loading"><span class="spinner"></span>Cargando...</div></div>
   </div>
 
 </div>
@@ -655,13 +702,13 @@ function showScreen(id){
     asistentes:['🛠️ Asistentes','¿Cuáles usaste ayer?'], mood:['🌙 Mood & Emociones','¿Cómo estuvo tu día?'],
     'consult-menu':['Consultar','Elige qué revisar'], view:['Consulta','Vista de solo lectura'],
     estrategia:['📋 Estrategia Semanal','Vista actual'], 'plan-hoy':['✅ Plan de Hoy','Marca lo que vayas completando'],
-    skincare:['🧴 Skin Care','Rutina de ayer']};
+    skincare:['🧴 Skin Care','Rutina de ayer'], habitos:['📊 Hábitos','Análisis mensual']};
   document.getElementById('topbar-title').textContent = titles[id][0];
   document.getElementById('topbar-sub').textContent = titles[id][1];
 }
 function goHome(){ showScreen('home'); loadHomeSummary(); }
 function handleBack(){
-  const viewScreens = ['view','estrategia','plan-hoy'];
+  const viewScreens = ['view','estrategia','plan-hoy','habitos'];
   const registerScreens = ['skincare'];
   const current = document.querySelector('.screen.active').id.replace('screen-','');
   if(viewScreens.includes(current)){ showScreen('consult-menu'); }
@@ -1308,6 +1355,197 @@ async function viewSkincare(){
     return `<div class="view-card"><h3>${dia}</h3><div class="meta">${fase}</div>
       <div class="body-text">AM ${am} · PM ${pm}${alertas.length?' · ⚠️ '+alertas.join(', '):''}</div></div>`;
   }).join('') || '<div class="loading">Sin datos.</div>';
+}
+
+// ====== HABITOS — analisis mensual ======
+const HABITOS_CONFIG = [
+  {key:'cockpit',  name:'🎛️ Cockpit',        source:'plandiario', match:/strategic advance|cockpit/i},
+  {key:'estoico',  name:'📖 Estoico',         source:'plandiario', match:/estoico/i},
+  {key:'presion',  name:'💊 Presión 7am',     source:'plandiario', match:/presi[oó]n/i},
+  {key:'skinam',   name:'🧴 Skin AM',         source:'skincare',   field:'AM Completado'},
+  {key:'skinpm',   name:'🧴 Skin PM',         source:'skincare',   field:'PM Completado'},
+  {key:'lectura',  name:'📚 Lectura',         source:'plandiario', match:/lectura/i},
+  {key:'gimnasio', name:'🏋️ Gimnasio',        source:'plandiario', match:/gimnasio/i},
+  {key:'mood',     name:'🌙 Mood registrado', source:'mood'},
+];
+const HABITOS_MONTHS = [
+  {label:'Junio',  year:2026, month:6},
+  {label:'Julio',  year:2026, month:7},
+  {label:'Agosto', year:2026, month:8},
+];
+let currentHabitosMonth = null;
+
+function daysInMonth(year, month){ return new Date(year, month, 0).getDate(); }
+function pad2(n){ return String(n).padStart(2,'0'); }
+
+async function openHabitos(){
+  showScreen('habitos');
+  const tabsEl = document.getElementById('month-tabs');
+  const now = new Date();
+  let defaultIdx = HABITOS_MONTHS.findIndex(m=>m.year===now.getFullYear() && m.month===now.getMonth()+1);
+  if(defaultIdx===-1) defaultIdx = HABITOS_MONTHS.length-1;
+  tabsEl.innerHTML = HABITOS_MONTHS.map((m,i)=>
+    `<button class="month-tab ${i===defaultIdx?'active':''}" onclick="selectHabitosMonth(${i})" id="mtab-${i}">${m.label}</button>`
+  ).join('');
+  await selectHabitosMonth(defaultIdx);
+}
+
+async function selectHabitosMonth(idx){
+  document.querySelectorAll('.month-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mtab-'+idx).classList.add('active');
+  currentHabitosMonth = HABITOS_MONTHS[idx];
+  const el = document.getElementById('habitos-content');
+  el.innerHTML = `<div class="loading"><span class="spinner"></span>Calculando...</div>`;
+
+  const {year, month} = currentHabitosMonth;
+  const nDays = daysInMonth(year, month);
+  const startStr = `${year}-${pad2(month)}-01`;
+  const endStr = `${year}-${pad2(month)}-${pad2(nDays)}`;
+
+  const [planData, skinData, moodData] = await Promise.all([
+    notionQuery(DB.planDiario, {and:[{property:'Fecha',date:{on_or_after:startStr}},{property:'Fecha',date:{on_or_before:endStr}}]}),
+    notionQuery(DB.skincare,   {and:[{property:'Fecha',date:{on_or_after:startStr}},{property:'Fecha',date:{on_or_before:endStr}}]}),
+    notionQuery(DB.mood,       {and:[{property:'Cuándo',date:{on_or_after:startStr}},{property:'Cuándo',date:{on_or_before:endStr}}]}),
+  ]);
+  const planRows = planData.results||[];
+  const skinRows = skinData.results||[];
+  const moodRows = moodData.results||[];
+
+  // matrix[habitKey][day] = true/false
+  const matrix = {};
+  HABITOS_CONFIG.forEach(h=> matrix[h.key] = {});
+
+  for(let d=1; d<=nDays; d++){
+    const dayStr = `${year}-${pad2(month)}-${pad2(d)}`;
+    HABITOS_CONFIG.forEach(h=>{
+      let done = false;
+      if(h.source==='plandiario'){
+        done = planRows.some(p => getProp(p,'Fecha')===dayStr && h.match.test(getProp(p,'Actividad')||'') && p.properties['Hecho']?.checkbox===true);
+      } else if(h.source==='skincare'){
+        done = skinRows.some(p => getProp(p,'Fecha')===dayStr && p.properties[h.field]?.checkbox===true);
+      } else if(h.source==='mood'){
+        done = moodRows.some(p => getProp(p,'Cuándo')===dayStr);
+      }
+      matrix[h.key][d] = done;
+    });
+  }
+
+  renderHabitos(matrix, nDays, year, month);
+}
+
+function renderHabitos(matrix, nDays, year, month){
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear()===year && today.getMonth()+1===month;
+  const lastDay = isCurrentMonth ? today.getDate() : nDays;
+
+  // % diario (promedio de habitos completados ese dia, solo hasta hoy si es mes actual)
+  const dailyPct = [];
+  for(let d=1; d<=lastDay; d++){
+    let done=0, total=0;
+    HABITOS_CONFIG.forEach(h=>{ total++; if(matrix[h.key][d]) done++; });
+    dailyPct.push(total? Math.round(done/total*100) : 0);
+  }
+  const hasData = dailyPct.some(p=>p>0);
+
+  if(!hasData){
+    document.getElementById('habitos-content').innerHTML = `<div class="h-panel"><div class="body-text" style="color:var(--text-dim)">Sin datos suficientes para ${HABITOS_MONTHS.find(m=>m.month===month).label} — normal en meses anteriores a que existieran Plan Diario / Skin Care. Sirve como referencia histórica.</div></div>`;
+    return;
+  }
+
+  // stats
+  const avgPct = Math.round(dailyPct.reduce((a,b)=>a+b,0)/dailyPct.length);
+  let curStreak=0;
+  for(let i=dailyPct.length-1;i>=0;i--){ if(dailyPct[i]>=70) curStreak++; else break; }
+  let bestStreak=0, run=0;
+  dailyPct.forEach(p=>{ if(p>=70){run++; bestStreak=Math.max(bestStreak,run);} else run=0; });
+
+  // area chart SVG points
+  const chartW=300, chartH=100;
+  const pts = dailyPct.map((p,i)=>{
+    const x = dailyPct.length>1 ? (i/(dailyPct.length-1))*chartW : 0;
+    const y = chartH - (p/100)*chartH;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const areaPts = `0,${chartH} ${pts} ${chartW},${chartH}`;
+
+  // weekly bars (chunks of 7 days)
+  const weeks = [];
+  for(let i=0;i<dailyPct.length;i+=7){
+    const chunk = dailyPct.slice(i,i+7);
+    const avg = Math.round(chunk.reduce((a,b)=>a+b,0)/chunk.length);
+    weeks.push(avg);
+  }
+  const weekColors = ['#2DE1FC,#0B3D5C','#FF7A29,#B34F0F','#FF4757,#A02530','#FFD23F,#B38A1F','#39FF8C,#1D9E75'];
+
+  // grid (scrollable, hasta lastDay)
+  const gridHeader = Array.from({length:lastDay},(_,i)=>`<th>${i+1}</th>`).join('');
+  const gridRows = HABITOS_CONFIG.map(h=>{
+    const cells = Array.from({length:lastDay},(_,i)=>{
+      const d=i+1; const on = matrix[h.key][d];
+      return `<td><div class="check-cell ${on?'on':'off'}">${on?'✓':''}</div></td>`;
+    }).join('');
+    return `<tr><td class="hn">${h.name}</td>${cells}</tr>`;
+  }).join('');
+
+  // ranking
+  const ranking = HABITOS_CONFIG.map(h=>{
+    let done=0;
+    for(let d=1; d<=lastDay; d++) if(matrix[h.key][d]) done++;
+    return {name:h.name, pct: lastDay? Math.round(done/lastDay*100):0};
+  }).sort((a,b)=>b.pct-a.pct);
+  const rankColor = p => p>=85?'#2DE1FC': p>=60?'#FFD23F': p>=40?'#FF7A29':'#FF4757';
+
+  document.getElementById('habitos-content').innerHTML = `
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-value">${avgPct}%</div><div class="stat-label">Cumplimiento</div></div>
+      <div class="stat-card"><div class="stat-value orange">🔥 ${curStreak}</div><div class="stat-label">Racha actual</div></div>
+      <div class="stat-card"><div class="stat-value green">${bestStreak}</div><div class="stat-label">Mejor racha</div></div>
+    </div>
+
+    <div class="h-panel">
+      <div class="h-panel-title"><span class="h-dot"></span>Tendencia diaria</div>
+      <div class="chart-wrap">
+        <svg viewBox="0 0 ${chartW} ${chartH}" preserveAspectRatio="none" style="width:100%;height:100%;overflow:visible">
+          <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2DE1FC" stop-opacity="0.45"/>
+            <stop offset="100%" stop-color="#2DE1FC" stop-opacity="0"/>
+          </linearGradient></defs>
+          <polygon points="${areaPts}" fill="url(#ag)"/>
+          <polyline points="${pts}" fill="none" stroke="#2DE1FC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="h-panel">
+      <div class="h-panel-title"><span class="h-dot" style="background:var(--ignite);box-shadow:0 0 8px var(--ignite)"></span>Progreso por semana</div>
+      <div class="weekly-bars">
+        ${weeks.map((w,i)=>`<div class="week-bar-col">
+          <div class="week-bar-pct">${w}%</div>
+          <div class="week-bar" style="height:${Math.max(w,3)}%; background:linear-gradient(180deg, ${weekColors[i%weekColors.length]})"></div>
+          <div class="week-bar-label">S${i+1}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="h-panel">
+      <div class="h-panel-title"><span class="h-dot" style="background:var(--pulse);box-shadow:0 0 8px var(--pulse)"></span>Cuadrícula del mes (desliza →)</div>
+      <div class="grid-scroll">
+        <table class="habit-grid">
+          <tr><th class="hn" style="text-align:left">Hábito</th>${gridHeader}</tr>
+          ${gridRows}
+        </table>
+      </div>
+    </div>
+
+    <div class="h-panel">
+      <div class="h-panel-title"><span class="h-dot" style="background:#39FF8C;box-shadow:0 0 8px #39FF8C"></span>Cumplimiento por hábito</div>
+      ${ranking.map(r=>`<div class="habit-row">
+        <div class="habit-row-name">${r.name}</div>
+        <div class="habit-bar-bg"><div class="habit-bar-fill" style="width:${r.pct}%; background:${rankColor(r.pct)}"></div></div>
+        <div class="habit-row-pct" style="color:${rankColor(r.pct)}">${r.pct}%</div>
+      </div>`).join('')}
+    </div>
+  `;
 }
 
 loadHomeSummary();
