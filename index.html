@@ -3,7 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>Fco.Logs</title>
+<title>Córtex</title>
+<meta name="apple-mobile-web-app-title" content="Córtex">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#05070D">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152.png">
+<link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -270,7 +278,7 @@
   <div class="topbar-left">
     <div class="node-dot"></div>
     <div>
-      <h1 id="topbar-title">Fco.Logs</h1>
+      <h1 id="topbar-title">Córtex</h1>
       <div class="sub" id="topbar-sub">Strategic Advance Cockpit</div>
     </div>
   </div>
@@ -697,7 +705,7 @@ function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+id).classList.add('active');
   document.getElementById('back-btn').style.display = id==='home' ? 'none':'block';
-  const titles = {home:['Fco.Logs','Strategic Advance Cockpit'], menu:['Registrar ayer','Elige qué actualizar'],
+  const titles = {home:['Córtex','Strategic Advance Cockpit'], menu:['Registrar ayer','Elige qué actualizar'],
     iniciativas:['🎯 Iniciativas','¿En cuáles avanzaste ayer?'], libros:['📚 Libros','Progreso de lectura'],
     asistentes:['🛠️ Asistentes','¿Cuáles usaste ayer?'], mood:['🌙 Mood & Emociones','¿Cómo estuvo tu día?'],
     'consult-menu':['Consultar','Elige qué revisar'], view:['Consulta','Vista de solo lectura'],
