@@ -1367,14 +1367,14 @@ async function viewSkincare(){
 
 // ====== HABITOS — analisis mensual ======
 const HABITOS_CONFIG = [
+  {key:'skinam',   name:'🧴 Skin AM',         source:'skincare',   field:'AM Completado'},
   {key:'cockpit',  name:'🎛️ Cockpit',        source:'plandiario', match:/strategic advance|cockpit/i},
   {key:'estoico',  name:'📖 Estoico',         source:'plandiario', match:/estoico/i},
   {key:'presion',  name:'💊 Presión 7am',     source:'plandiario', match:/presi[oó]n/i},
-  {key:'skinam',   name:'🧴 Skin AM',         source:'skincare',   field:'AM Completado'},
-  {key:'skinpm',   name:'🧴 Skin PM',         source:'skincare',   field:'PM Completado'},
   {key:'lectura',  name:'📚 Lectura',         source:'plandiario', match:/lectura/i},
   {key:'gimnasio', name:'🏋️ Gimnasio',        source:'plandiario', match:/gimnasio/i},
   {key:'mood',     name:'🌙 Mood registrado', source:'mood'},
+  {key:'skinpm',   name:'🧴 Skin PM',         source:'skincare',   field:'PM Completado'},
 ];
 const HABITOS_MONTHS = [
   {label:'Junio',  year:2026, month:6},
