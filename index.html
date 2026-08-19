@@ -120,6 +120,18 @@
     color:#5FE3B0;
     box-shadow:inset 0 1px 0 rgba(95,227,176,.15);
   }
+
+  /* Variante compacta — botones "Guardar" secundarios dentro de formularios */
+  .glass-wrap.save-glass{margin-top:12px; border-radius:13px;}
+  .glass-wrap.save-glass::before{background:conic-gradient(from 45deg, transparent 0%, var(--synapse) 8%, transparent 20%, transparent 100%); animation-duration:2.8s;}
+  .glass-wrap.save-glass .glass-inner{
+    border-radius:11.5px; padding:14px; font-size:15px; font-family:var(--font-body); font-weight:600;
+    background:linear-gradient(135deg, rgba(20,184,125,.14), rgba(13,107,74,.2));
+    color:var(--synapse);
+    box-shadow:inset 0 1px 0 rgba(95,227,176,.12);
+  }
+  .glass-wrap.save-glass .glass-inner:disabled{opacity:.5;}
+  .glass-wrap.save-glass .glass-inner.saved{background:linear-gradient(135deg, rgba(20,184,125,.28), rgba(13,107,74,.32)); color:var(--pulse);}
   .plan-item{
     background:var(--panel); border:1px solid var(--panel-border); border-radius:16px;
     padding:16px 18px; margin-bottom:10px; backdrop-filter:blur(12px); display:flex; align-items:center; gap:14px;
@@ -374,7 +386,7 @@
     <label style="margin-top:16px">Nota del día (opcional)</label>
     <textarea id="mood-note" placeholder="Algo que quieras anotar sobre ayer..."></textarea>
 
-    <button class="save-btn" id="mood-save-btn" onclick="saveMood()" style="margin-top:16px">Guardar Mood de ayer</button>
+    <div class="glass-wrap save-glass" style="margin-top:16px"><button class="glass-inner" id="mood-save-btn" onclick="saveMood()">Guardar Mood de ayer</button></div>
   </div>
 
   <!-- SCREEN: CONSULTAR MENU -->
@@ -812,7 +824,7 @@ function renderIniciativas(){
         <label>Próxima acción mínima</label>
         <input type="text" id="next-${id}" value="${next==='(sin definir)'?'':next}">
       </div>
-      <button class="save-btn" id="save-${id}" onclick="saveIniciativa('${id}')" style="display:none">Guardar</button>
+      <div class="glass-wrap save-glass" id="save-wrap-${id}" style="display:none"><button class="glass-inner" id="save-${id}" onclick="saveIniciativa('${id}')">Guardar</button></div>
     </div>`;
   }).join('');
   document.getElementById('init-list').innerHTML = html;
@@ -821,7 +833,7 @@ function setWorked(id, worked){
   document.getElementById('btn-yes-'+id).classList.toggle('active', worked);
   document.getElementById('btn-no-'+id).classList.toggle('active', !worked);
   document.getElementById('fields-'+id).style.display = worked ? 'block' : 'none';
-  document.getElementById('save-'+id).style.display = 'block';
+  document.getElementById('save-wrap-'+id).style.display = 'block';
   document.getElementById('init-'+id).dataset.worked = worked;
 }
 async function saveIniciativa(id){
@@ -867,8 +879,8 @@ function renderLibros(){
       <div class="book-author">${author}</div>
       <div class="book-progress-current">📍 ${progress||'(sin registrar)'}</div>
       <label>Nuevo progreso</label>
-      <input type="text" id="prog-${id}" value="${progress}" oninput="document.getElementById('save-book-${id}').style.display='block'">
-      <button class="save-btn" id="save-book-${id}" onclick="saveLibro('${id}')" style="display:none">Guardar</button>
+      <input type="text" id="prog-${id}" value="${progress}" oninput="document.getElementById('save-book-wrap-${id}').style.display='block'">
+      <div class="glass-wrap save-glass" id="save-book-wrap-${id}" style="display:none"><button class="glass-inner" id="save-book-${id}" onclick="saveLibro('${id}')">Guardar</button></div>
     </div>`;
   }).join('');
   document.getElementById('libros-list').innerHTML = html;
@@ -911,7 +923,7 @@ function renderAsistentes(){
       </div>
     </div>`;
   }).join('');
-  document.getElementById('asis-list').innerHTML = html + `<button class="save-btn" style="margin-top:10px" onclick="saveAsistentes()">Guardar asistentes usados</button>`;
+  document.getElementById('asis-list').innerHTML = html + `<div class="glass-wrap save-glass" style="margin-top:10px"><button class="glass-inner" onclick="saveAsistentes()">Guardar asistentes usados</button></div>`;
 }
 function toggleAsis(id){
   const chk = document.getElementById('check-'+id);
@@ -1333,7 +1345,7 @@ async function openSkincare(){
     <label style="margin-top:16px">Notas</label>
     <textarea id="skin-notas" placeholder="Cualquier observación...">${getProp(item,'Notas')||''}</textarea>
 
-    <button class="save-btn" id="skin-save-btn" onclick="saveSkincare()" style="margin-top:16px">Guardar Skin Care de ayer</button>
+    <div class="glass-wrap save-glass" style="margin-top:16px"><button class="glass-inner" id="skin-save-btn" onclick="saveSkincare()">Guardar Skin Care de ayer</button></div>
   `;
   // estado local de checkboxes
   window._skinState = {amDone, pmDone, minAM, minPM};
