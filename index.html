@@ -408,6 +408,10 @@
         <div class="card-left"><div class="card-icon-wrap">🌙</div><span class="card-title">Mood & Emociones</span></div>
         <span class="chevron">›</span>
       </div>
+      <div class="node-card" onclick="openDiarioPareja()">
+        <div class="card-left"><div class="card-icon-wrap">💌</div><span class="card-title">Diario de Pareja</span></div>
+        <span class="chevron">›</span>
+      </div>
       <div class="node-card" onclick="viewEstrategia()">
         <div class="card-left"><div class="card-icon-wrap">📋</div><span class="card-title">Estrategia Semanal</span></div>
         <span class="chevron">›</span>
@@ -441,6 +445,11 @@
   <!-- SCREEN: SKIN CARE (registro) -->
   <div class="screen" id="screen-skincare">
     <div id="skincare-content"><div class="loading"><span class="spinner"></span>Cargando...</div></div>
+  </div>
+
+  <!-- SCREEN: DIARIO DE PAREJA -->
+  <div class="screen" id="screen-diario">
+    <div id="diario-content"><div class="loading"><span class="spinner"></span>Cargando...</div></div>
   </div>
 
   <!-- SCREEN: HABITOS (analisis mensual) -->
@@ -659,6 +668,7 @@ const DB = {
   libros:      '759f6d6ddec94c1b9f264ead26722291',
   planDiario:  '32e7e7e54a54459994453956a6682ef2',
   skincare:    'fe5b9a8cdbca46449b2a916badd49d4f',
+  diario:      '3f7f63b3a8424024a89c3f57c649861e',
 };
 const ALERT_SIGNALS = ["Enrojecimiento","Ardor/picazón","Descamación","Sensibilidad","Ninguna"];
 const ESTRATEGIA_PAGE_ID = '36fcfff4-3a34-819e-9c56-cc2eb4f0d864';
@@ -743,13 +753,14 @@ function showScreen(id){
     asistentes:['🛠️ Asistentes','¿Cuáles usaste ayer?'], mood:['🌙 Mood & Emociones','¿Cómo estuvo tu día?'],
     'consult-menu':['Consultar','Elige qué revisar'], view:['Consulta','Vista de solo lectura'],
     estrategia:['📋 Estrategia Semanal','Vista actual'], 'plan-hoy':['✅ Plan de Hoy','Marca lo que vayas completando'],
-    skincare:['🧴 Skin Care','Rutina de ayer'], habitos:['📊 Hábitos','Análisis mensual']};
+    skincare:['🧴 Skin Care','Rutina de ayer'], habitos:['📊 Hábitos','Análisis mensual'],
+    diario:['💌 Diario de Pareja','Reflexión del día']};
   document.getElementById('topbar-title').textContent = titles[id][0];
   document.getElementById('topbar-sub').textContent = titles[id][1];
 }
 function goHome(){ showScreen('home'); loadHomeSummary(); }
 function handleBack(){
-  const viewScreens = ['view','estrategia','plan-hoy','habitos'];
+  const viewScreens = ['view','estrategia','plan-hoy','habitos','diario'];
   const registerScreens = ['skincare'];
   const current = document.querySelector('.screen.active').id.replace('screen-','');
   if(viewScreens.includes(current)){ showScreen('consult-menu'); }
@@ -1396,6 +1407,181 @@ async function viewSkincare(){
     return `<div class="view-card"><h3>${dia}</h3><div class="meta">${fase}</div>
       <div class="body-text">AM ${am} · PM ${pm}${alertas.length?' · ⚠️ '+alertas.join(', '):''}</div></div>`;
   }).join('') || '<div class="loading">Sin datos.</div>';
+}
+
+// ====== DIARIO DE PAREJA ======
+// Nota: NUNCA agregar campos de puntuacion/calificacion/banderas rojas-verdes a esta base.
+// Es espacio de autorreflexion de Francisco, no monitoreo de Ana. Ver instrucciones originales.
+function fmtShortDate(dStr){
+  const d = new Date(dStr+'T12:00:00');
+  return d.toLocaleDateString('es-MX',{weekday:'long', day:'numeric', month:'short'});
+}
+async function openDiarioPareja(){
+  showScreen('diario');
+  const el = document.getElementById('diario-content');
+  el.innerHTML = `<div class="loading"><span class="spinner"></span>Revisando entradas recientes...</div>`;
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const checkDates = [];
+  for(let i=0;i<5;i++){ const d=new Date(); d.setDate(d.getDate()-i); checkDates.push(d.toISOString().split('T')[0]); }
+  const oldestStr = checkDates[checkDates.length-1];
+
+  const data = await notionQuery(DB.diario, {and:[{property:'Fecha',date:{on_or_after:oldestStr}},{property:'Fecha',date:{on_or_before:todayStr}}]});
+  if(!data.results){
+    el.innerHTML = `<div class="view-card"><div class="body-text" style="color:var(--alert)">Error al consultar: ${data.error||'desconocido'}</div></div>`;
+    return;
+  }
+  const rows = data.results;
+  const filledDates = new Set(rows.map(r=>getProp(r,'Fecha')));
+  const missing = checkDates.filter(d=>!filledDates.has(d));
+
+  let html = '';
+
+  if(!missing.includes(todayStr)){
+    const existing = rows.find(r=>getProp(r,'Fecha')===todayStr);
+    html += diarioButtonHtml(todayStr, '📔 Editar diario de hoy', existing);
+  } else {
+    const gaps = missing.filter(d=>d!==todayStr);
+    if(gaps.length===0){
+      html += diarioButtonHtml(todayStr, '📔 Diario de hoy', null);
+    } else if(gaps.length===1){
+      const label = gaps[0]===checkDates[1] ? 'ayer' : fmtShortDate(gaps[0]);
+      html += diarioButtonHtml(gaps[0], `📔 Diario de ${label} (pendiente)`, null);
+    } else {
+      html += `<div class="view-card"><h3>Tienes ${gaps.length} días sin registrar</h3><div class="meta">Elige cuál completar — sin prisa, sin obligación de llenarlos todos</div></div>`;
+      gaps.forEach(d=>{
+        html += `<div class="node-card" onclick="renderDiarioForm('${d}', null)" style="cursor:pointer">
+          <div class="card-left"><div class="card-icon-wrap">💌</div><span class="card-title">${fmtShortDate(d)}</span></div>
+          <span class="chevron">›</span></div>`;
+      });
+      html += diarioButtonHtml(todayStr, '📔 Diario de hoy', null);
+    }
+  }
+
+  html += `<div class="section-title" style="margin-top:26px">Entradas recientes</div><div id="diario-history"></div>`;
+  el.innerHTML = html;
+  renderDiarioHistory(rows);
+}
+
+function diarioButtonHtml(dateStr, label, existingRow){
+  const id = existingRow ? existingRow.id : '';
+  return `<div class="glass-wrap primary"><button class="glass-inner" onclick="renderDiarioForm('${dateStr}', ${existingRow?`'${id}'`:'null'})">${label}</button></div>`;
+}
+
+function renderDiarioHistory(rows){
+  const sorted = [...rows].sort((a,b)=>(getProp(b,'Fecha')||'').localeCompare(getProp(a,'Fecha')||''));
+  const histEl = document.getElementById('diario-history');
+  if(!histEl) return;
+  if(sorted.length===0){ histEl.innerHTML = `<div class="loading" style="padding:20px 0">Sin entradas todavía.</div>`; return; }
+  histEl.innerHTML = sorted.map(r=>{
+    const fecha = fmtShortDate(getProp(r,'Fecha'));
+    const paso = getProp(r,'Que paso entre nosotros')||'';
+    const pend = getProp(r,'Pendientes que salieron hoy')||'';
+    const ubic = getProp(r,'Ubicacion')||'';
+    const llamada = r.properties['Llamada de las 12']?.checkbox===true;
+    return `<div class="view-card">
+      <h3 style="text-transform:capitalize">${fecha}</h3>
+      <div class="meta">${ubic}${llamada?' · 📞 llamada ✓':''}</div>
+      ${paso?`<div class="body-text">${paso.substring(0,140)}${paso.length>140?'…':''}</div>`:''}
+      ${pend?`<div class="body-text" style="margin-top:8px;color:var(--pulse)">📌 ${pend}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function renderDiarioForm(dateStr, existingId){
+  let existing = null;
+  if(existingId){
+    const data = await notionQuery(DB.diario, {property:'Fecha', date:{equals:dateStr}});
+    existing = (data.results||[])[0] || null;
+  }
+  const g = (name) => existing ? (getProp(existing,name)||'') : '';
+  const ubicVal = existing ? (getProp(existing,'Ubicacion')||'') : '';
+  const llamadaVal = existing ? (existing.properties['Llamada de las 12']?.checkbox===true) : false;
+
+  const el = document.getElementById('diario-content');
+  el.innerHTML = `
+    <div class="view-card">
+      <label>Fecha</label>
+      <input type="text" id="diario-fecha" value="${dateStr}" placeholder="YYYY-MM-DD">
+
+      <label>¿Cómo estuve yo?</label>
+      <textarea id="diario-yo" placeholder="Tu día, sin filtro...">${g('Como estuve yo')}</textarea>
+
+      <label>¿Qué pasó entre nosotros?</label>
+      <textarea id="diario-nosotros" placeholder="Hechos del día, sin interpretar de más...">${g('Que paso entre nosotros')}</textarea>
+
+      <label>Mejora para mañana</label>
+      <input type="text" id="diario-mejora" value="${g('Mejora para manana')}" placeholder="Una sola cosa concreta">
+
+      <div id="diario-more-toggle" onclick="document.getElementById('diario-more').style.display='block'; this.style.display='none';"
+           style="margin-top:14px; font-family:var(--font-mono); font-size:12px; color:var(--text-dim); cursor:pointer; text-decoration:underline;">
+        + Más detalles (opcional)
+      </div>
+      <div id="diario-more" style="display:none">
+        <label>Ubicación</label>
+        <div class="worked-toggle">
+          <button class="toggle-btn ${ubicVal==='Egipto'?'active':''}" id="diario-ubic-egipto" onclick="selectDiarioUbic('Egipto')">Egipto</button>
+          <button class="toggle-btn ${ubicVal==='Mexico'?'active':''}" id="diario-ubic-mexico" onclick="selectDiarioUbic('Mexico')">México</button>
+        </div>
+        <label>Pendientes que salieron hoy</label>
+        <input type="text" id="diario-pendientes" value="${g('Pendientes que salieron hoy')}" placeholder="Solo si algo concreto quedó abierto">
+        <div class="asis-card" style="margin-top:12px" onclick="toggleDiarioLlamada()">
+          <div class="asis-top"><div class="asis-name">📞 Llamada de las 12 — ¿se cumplió?</div>
+          <div class="check-toggle ${llamadaVal?'checked':''}" id="diario-check-llamada">✓</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="glass-wrap save-glass"><button class="glass-inner" id="diario-save-btn" onclick="saveDiario('${existing?existing.id:''}')">Guardar</button></div>
+  `;
+  window._diarioUbic = ubicVal;
+  window._diarioLlamada = llamadaVal;
+}
+function selectDiarioUbic(v){
+  window._diarioUbic = v;
+  document.getElementById('diario-ubic-egipto').classList.toggle('active', v==='Egipto');
+  document.getElementById('diario-ubic-mexico').classList.toggle('active', v==='Mexico');
+}
+function toggleDiarioLlamada(){
+  window._diarioLlamada = !window._diarioLlamada;
+  document.getElementById('diario-check-llamada').classList.toggle('checked', window._diarioLlamada);
+}
+async function saveDiario(existingId){
+  const btn = document.getElementById('diario-save-btn');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+  const dateStr = document.getElementById('diario-fecha').value;
+  const dayName = new Date(dateStr+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long'});
+  const titulo = `${dateStr} - ${dayName.charAt(0).toUpperCase()+dayName.slice(1)}`;
+
+  const props = {
+    'Entrada': { title:[{text:{content:titulo}}] },
+    'Fecha': { date:{start:dateStr} },
+    'Como estuve yo': { rich_text:[{text:{content:document.getElementById('diario-yo').value}}] },
+    'Que paso entre nosotros': { rich_text:[{text:{content:document.getElementById('diario-nosotros').value}}] },
+    'Mejora para manana': { rich_text:[{text:{content:document.getElementById('diario-mejora').value}}] },
+    'Pendientes que salieron hoy': { rich_text:[{text:{content:document.getElementById('diario-pendientes').value}}] },
+    'Llamada de las 12': { checkbox: !!window._diarioLlamada },
+  };
+  if(window._diarioUbic) props['Ubicacion'] = { select:{name:window._diarioUbic} };
+
+  let res;
+  if(existingId){
+    res = await notionUpdate(existingId, props);
+  } else {
+    const r = await fetch('/api/notion', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({action:'createPage', dbId: DB.diario, properties: props})
+    });
+    res = await r.json();
+  }
+  if(res.ok){
+    btn.classList.add('saved'); btn.textContent = '✓ Guardado';
+    toast('Diario guardado');
+    setTimeout(()=>openDiarioPareja(), 900);
+  } else {
+    btn.textContent = 'Error — reintentar'; btn.disabled = false;
+    console.error(res);
+  }
 }
 
 // ====== HABITOS — analisis mensual ======
