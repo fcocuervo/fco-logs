@@ -249,7 +249,7 @@
     font-size:16px; font-family:var(--font-body); resize:vertical; background:rgba(255,255,255,.02); color:var(--text);
   }
   textarea:focus, input:focus{outline:none; border-color:var(--synapse); box-shadow:0 0 0 3px rgba(20,184,125,.1);}
-  textarea{min-height:64px;}
+  textarea{min-height:64px; overflow:hidden; resize:none; transition:height .1s ease;}
   .worked-toggle{display:flex; gap:8px; margin-top:10px;}
   .toggle-btn{
     flex:1; padding:14px 8px; border-radius:12px; border:1px solid var(--panel-border); background:rgba(255,255,255,.02);
@@ -385,7 +385,7 @@
     <div class="emo-options" id="emo-paz"></div>
 
     <label style="margin-top:16px">Nota del día (opcional)</label>
-    <textarea id="mood-note" placeholder="Algo que quieras anotar sobre ayer..."></textarea>
+    <textarea id="mood-note" oninput="autoExpand(this)" placeholder="Algo que quieras anotar sobre ayer..."></textarea>
 
     <div class="glass-wrap save-glass" style="margin-top:16px"><button class="glass-inner" id="mood-save-btn" onclick="saveMood()">Guardar Mood de ayer</button></div>
   </div>
@@ -712,6 +712,13 @@ function toast(msg){
   t.textContent = msg; t.style.display='block';
   setTimeout(()=>t.style.display='none', 2200);
 }
+function autoExpand(el){
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight + 2) + 'px';
+}
+function autoExpandAll(){
+  document.querySelectorAll('textarea').forEach(autoExpand);
+}
 
 async function notionQuery(dbId, filter){
   const r = await fetch('/api/notion', {
@@ -761,7 +768,7 @@ function showScreen(id){
 }
 function goHome(){ showScreen('home'); loadHomeSummary(); }
 function handleBack(){
-  const viewScreens = ['view','estrategia','plan-hoy','habitos','diario'];
+  const viewScreens = ['view','estrategia','plan-hoy','habitos'];
   const registerScreens = ['skincare'];
   const current = document.querySelector('.screen.active').id.replace('screen-','');
   if(viewScreens.includes(current)){ showScreen('consult-menu'); }
@@ -832,7 +839,7 @@ function renderIniciativas(){
       </div>
       <div id="fields-${id}" style="display:none">
         <label>¿Qué hiciste?</label>
-        <textarea id="last-${id}" placeholder="Ej: avancé la letra del son...">${last}</textarea>
+        <textarea id="last-${id}" oninput="autoExpand(this)" placeholder="Ej: avancé la letra del son...">${last}</textarea>
         <label>Próxima acción mínima</label>
         <input type="text" id="next-${id}" value="${next==='(sin definir)'?'':next}">
       </div>
@@ -840,6 +847,7 @@ function renderIniciativas(){
     </div>`;
   }).join('');
   document.getElementById('init-list').innerHTML = html;
+  setTimeout(autoExpandAll, 50);
 }
 function setWorked(id, worked){
   document.getElementById('btn-yes-'+id).classList.toggle('active', worked);
@@ -931,7 +939,7 @@ function renderAsistentes(){
         <div class="check-toggle" id="check-${id}">✓</div>
       </div>
       <div class="asis-note" id="note-wrap-${id}">
-        <textarea id="note-${id}" placeholder="¿Para qué lo usaste?"></textarea>
+        <textarea id="note-${id}" oninput="autoExpand(this)" placeholder="¿Para qué lo usaste?"></textarea>
       </div>
     </div>`;
   }).join('');
@@ -1355,7 +1363,7 @@ async function openSkincare(){
     </div>
 
     <label style="margin-top:16px">Notas</label>
-    <textarea id="skin-notas" placeholder="Cualquier observación...">${getProp(item,'Notas')||''}</textarea>
+    <textarea id="skin-notas" oninput="autoExpand(this)" placeholder="Cualquier observación...">${getProp(item,'Notas')||''}</textarea>
 
     <div class="glass-wrap save-glass" style="margin-top:16px"><button class="glass-inner" id="skin-save-btn" onclick="saveSkincare()">Guardar Skin Care de ayer</button></div>
   `;
@@ -1507,10 +1515,10 @@ async function renderDiarioForm(dateStr, existingId){
       <input type="text" id="diario-fecha" value="${dateStr}" placeholder="YYYY-MM-DD">
 
       <label>¿Cómo estuve yo?</label>
-      <textarea id="diario-yo" placeholder="Tu día, sin filtro...">${g('Como estuve yo')}</textarea>
+      <textarea id="diario-yo" oninput="autoExpand(this)" placeholder="Tu día, sin filtro...">${g('Como estuve yo')}</textarea>
 
       <label>¿Qué pasó entre nosotros?</label>
-      <textarea id="diario-nosotros" placeholder="Hechos del día, sin interpretar de más...">${g('Que paso entre nosotros')}</textarea>
+      <textarea id="diario-nosotros" oninput="autoExpand(this)" placeholder="Hechos del día, sin interpretar de más...">${g('Que paso entre nosotros')}</textarea>
 
       <label>Mejora para mañana</label>
       <input type="text" id="diario-mejora" value="${g('Mejora para manana')}" placeholder="Una sola cosa concreta">
@@ -1532,13 +1540,14 @@ async function renderDiarioForm(dateStr, existingId){
           <div class="check-toggle ${llamadaVal?'checked':''}" id="diario-check-llamada">✓</div></div>
         </div>
         <label>Comentario de la llamada (si se hizo o no, de qué hablaron)</label>
-        <textarea id="diario-llamada-comentario" placeholder="Opcional...">${g('Comentario de la llamada')}</textarea>
+        <textarea id="diario-llamada-comentario" oninput="autoExpand(this)" placeholder="Opcional...">${g('Comentario de la llamada')}</textarea>
       </div>
     </div>
     <div class="glass-wrap save-glass"><button class="glass-inner" id="diario-save-btn" onclick="saveDiario('${existing?existing.id:''}')">Guardar</button></div>
   `;
   window._diarioUbic = ubicVal;
   window._diarioLlamada = llamadaVal;
+  setTimeout(autoExpandAll, 50);
 }
 function selectDiarioUbic(v){
   window._diarioUbic = v;
@@ -1615,11 +1624,19 @@ const HABITOS_CONFIG = [
   {key:'diario',   name:'💌 Diario Pareja',   source:'diario'},
   {key:'skinpm',   name:'🧴 Skin PM',         source:'skincare',   field:'PM Completado'},
 ];
-const HABITOS_MONTHS = [
-  {label:'Junio',  year:2026, month:6},
-  {label:'Julio',  year:2026, month:7},
-  {label:'Agosto', year:2026, month:8},
-];
+function generateHabitosMonths(){
+  const labels = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const months = [];
+  const cur = new Date(2026, 5, 1); // arranca en Junio 2026, cuando empezó el sistema
+  const now = new Date();
+  const stop = new Date(now.getFullYear(), now.getMonth(), 1);
+  while(cur <= stop){
+    months.push({label: labels[cur.getMonth()], year: cur.getFullYear(), month: cur.getMonth()+1});
+    cur.setMonth(cur.getMonth()+1);
+  }
+  return months;
+}
+const HABITOS_MONTHS = generateHabitosMonths();
 let currentHabitosMonth = null;
 
 function daysInMonth(year, month){ return new Date(year, month, 0).getDate(); }
