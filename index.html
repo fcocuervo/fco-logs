@@ -327,6 +327,7 @@
     <div class="glass-wrap primary"><button class="glass-inner" onclick="showScreen('menu')">📋 Registrar ayer</button></div>
     <div class="glass-wrap secondary"><button class="glass-inner" onclick="showScreen('consult-menu')">🔍 Consultar bases de datos</button></div>
     <div class="glass-wrap tertiary"><button class="glass-inner" onclick="openPlanHoy()">✅ Plan de Hoy</button></div>
+    <div class="glass-wrap secondary"><button class="glass-inner" onclick="openDiarioPareja()">💌 Diario de Pareja</button></div>
   </div>
 
   <div class="screen" id="screen-menu">
@@ -1475,12 +1476,13 @@ function renderDiarioHistory(rows){
   if(sorted.length===0){ histEl.innerHTML = `<div class="loading" style="padding:20px 0">Sin entradas todavía.</div>`; return; }
   histEl.innerHTML = sorted.map(r=>{
     const fecha = fmtShortDate(getProp(r,'Fecha'));
+    const fechaRaw = getProp(r,'Fecha');
     const paso = getProp(r,'Que paso entre nosotros')||'';
     const pend = getProp(r,'Pendientes que salieron hoy')||'';
     const ubic = getProp(r,'Ubicacion')||'';
     const llamada = r.properties['Llamada de las 12']?.checkbox===true;
-    return `<div class="view-card">
-      <h3 style="text-transform:capitalize">${fecha}</h3>
+    return `<div class="view-card" style="cursor:pointer" onclick="renderDiarioForm('${fechaRaw}', '${r.id}')">
+      <h3 style="text-transform:capitalize">${fecha} <span style="font-size:11px;color:var(--text-faint);font-family:var(--font-mono);text-transform:none">— toca para ver/editar</span></h3>
       <div class="meta">${ubic}${llamada?' · 📞 llamada ✓':''}</div>
       ${paso?`<div class="body-text">${paso.substring(0,140)}${paso.length>140?'…':''}</div>`:''}
       ${pend?`<div class="body-text" style="margin-top:8px;color:var(--pulse)">📌 ${pend}</div>`:''}
@@ -1529,6 +1531,8 @@ async function renderDiarioForm(dateStr, existingId){
           <div class="asis-top"><div class="asis-name">📞 Llamada de las 12 — ¿se cumplió?</div>
           <div class="check-toggle ${llamadaVal?'checked':''}" id="diario-check-llamada">✓</div></div>
         </div>
+        <label>Comentario de la llamada (si se hizo o no, de qué hablaron)</label>
+        <textarea id="diario-llamada-comentario" placeholder="Opcional...">${g('Comentario de la llamada')}</textarea>
       </div>
     </div>
     <div class="glass-wrap save-glass"><button class="glass-inner" id="diario-save-btn" onclick="saveDiario('${existing?existing.id:''}')">Guardar</button></div>
@@ -1561,6 +1565,7 @@ async function saveDiario(existingId){
     'Mejora para manana': { rich_text:[{text:{content:document.getElementById('diario-mejora').value}}] },
     'Pendientes que salieron hoy': { rich_text:[{text:{content:document.getElementById('diario-pendientes').value}}] },
     'Llamada de las 12': { checkbox: !!window._diarioLlamada },
+    'Comentario de la llamada': { rich_text:[{text:{content:document.getElementById('diario-llamada-comentario').value}}] },
   };
   if(window._diarioUbic) props['Ubicacion'] = { select:{name:window._diarioUbic} };
 
@@ -1573,6 +1578,20 @@ async function saveDiario(existingId){
       body: JSON.stringify({action:'createPage', dbId: DB.diario, properties: props})
     });
     res = await r.json();
+  }
+  // Si falla por la columna "Comentario de la llamada" (aun no creada manualmente en Notion), reintentar sin ella
+  if(!res.ok && (res.error||'').toString().toLowerCase().includes('comentario de la llamada')){
+    delete props['Comentario de la llamada'];
+    if(existingId){
+      res = await notionUpdate(existingId, props);
+    } else {
+      const r2 = await fetch('/api/notion', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({action:'createPage', dbId: DB.diario, properties: props})
+      });
+      res = await r2.json();
+    }
+    if(res.ok) toast('Guardado — falta crear la columna "Comentario de la llamada" en Notion para ese campo');
   }
   if(res.ok){
     btn.classList.add('saved'); btn.textContent = '✓ Guardado';
@@ -1593,6 +1612,7 @@ const HABITOS_CONFIG = [
   {key:'lectura',  name:'📚 Lectura',         source:'plandiario', match:/lectura/i},
   {key:'gimnasio', name:'🏋️ Gimnasio',        source:'plandiario', match:/gimnasio/i},
   {key:'mood',     name:'🌙 Mood registrado', source:'mood'},
+  {key:'diario',   name:'💌 Diario Pareja',   source:'diario'},
   {key:'skinpm',   name:'🧴 Skin PM',         source:'skincare',   field:'PM Completado'},
 ];
 const HABITOS_MONTHS = [
@@ -1629,12 +1649,13 @@ async function selectHabitosMonth(idx){
   const startStr = `${year}-${pad2(month)}-01`;
   const endStr = `${year}-${pad2(month)}-${pad2(nDays)}`;
 
-  let planData, skinData, moodData;
+  let planData, skinData, moodData, diarioData;
   try{
-    [planData, skinData, moodData] = await Promise.all([
+    [planData, skinData, moodData, diarioData] = await Promise.all([
       notionQuery(DB.planDiario, {and:[{property:'Fecha',date:{on_or_after:startStr}},{property:'Fecha',date:{on_or_before:endStr}}]}),
       notionQuery(DB.skincare,   {and:[{property:'Fecha',date:{on_or_after:startStr}},{property:'Fecha',date:{on_or_before:endStr}}]}),
       notionQuery(DB.mood,       {and:[{property:'Cuándo',date:{on_or_after:startStr}},{property:'Cuándo',date:{on_or_before:endStr}}]}),
+      notionQuery(DB.diario,     {and:[{property:'Fecha',date:{on_or_after:startStr}},{property:'Fecha',date:{on_or_before:endStr}}]}),
     ]);
   }catch(e){
     el.innerHTML = `<div class="h-panel"><div class="body-text" style="color:var(--alert)">Error de red al consultar Notion: ${e.message}</div></div>`;
@@ -1645,14 +1666,16 @@ async function selectHabitosMonth(idx){
   if(!planData.results) errs.push('Plan Diario: '+(planData.error||JSON.stringify(planData)).toString().substring(0,150));
   if(!skinData.results) errs.push('Skin Care: '+(skinData.error||JSON.stringify(skinData)).toString().substring(0,150));
   if(!moodData.results) errs.push('Daily Mood: '+(moodData.error||JSON.stringify(moodData)).toString().substring(0,150));
+  if(!diarioData.results) errs.push('Diario de Pareja: '+(diarioData.error||JSON.stringify(diarioData)).toString().substring(0,150));
   if(errs.length>0){
     el.innerHTML = `<div class="h-panel"><div class="body-text" style="color:var(--alert)">Errores de consulta:<br>${errs.join('<br>')}</div></div>`;
-    console.error('Habitos query errors', {planData, skinData, moodData});
+    console.error('Habitos query errors', {planData, skinData, moodData, diarioData});
     return;
   }
   const planRows = planData.results||[];
   const skinRows = skinData.results||[];
   const moodRows = moodData.results||[];
+  const diarioRows = diarioData.results||[];
   console.log('DEBUG Habitos', {mes:month, planRowsCount:planRows.length, skinRowsCount:skinRows.length, moodRowsCount:moodRows.length, planRows});
 
   // matrix[habitKey][day] = true/false
@@ -1669,6 +1692,8 @@ async function selectHabitosMonth(idx){
         done = skinRows.some(p => getProp(p,'Fecha')===dayStr && p.properties[h.field]?.checkbox===true);
       } else if(h.source==='mood'){
         done = moodRows.some(p => getProp(p,'Cuándo')===dayStr);
+      } else if(h.source==='diario'){
+        done = diarioRows.some(p => getProp(p,'Fecha')===dayStr);
       }
       matrix[h.key][d] = done;
     });
