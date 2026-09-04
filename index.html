@@ -39,6 +39,13 @@
     padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 24px); overflow-x:hidden; position:relative;
     -webkit-font-smoothing:antialiased;
   }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 700px 500px at 12% -8%, rgba(240,194,75,.10), transparent 60%),
+      radial-gradient(ellipse 800px 600px at 105% 18%, rgba(20,184,125,.14), transparent 55%),
+      radial-gradient(ellipse 600px 500px at 15% 95%, rgba(13,107,74,.16), transparent 60%);
+  }
   canvas#neural-bg{position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none;}
 
   .app{position:relative; z-index:1;}
@@ -238,6 +245,14 @@
 
   .section-title{font-family:var(--font-display); font-size:15.5px; font-weight:600; margin:20px 0 10px; color:var(--text); letter-spacing:.01em;}
 
+  .init-carousel{
+    display:flex; overflow-x:auto; scroll-snap-type:x mandatory; gap:14px;
+    padding:4px 6px 18px; margin:0 -6px; scrollbar-width:none;
+  }
+  .init-carousel::-webkit-scrollbar{display:none;}
+  .init-carousel .init-card{flex:0 0 86%; scroll-snap-align:center; margin-bottom:0;}
+  .carousel-hint{font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); text-align:center; margin:-10px 0 12px; text-transform:uppercase; letter-spacing:.06em;}
+
   .init-card{
     background:var(--panel); border:1px solid var(--panel-border); border-radius:18px;
     padding:20px; margin-bottom:14px; backdrop-filter:blur(12px); transition:border-color .3s;
@@ -331,6 +346,8 @@
   <div class="screen active" id="screen-home">
     <div class="greeting">Buenos días, Francisco</div>
     <div class="date" id="today-date"></div>
+    <div class="stats-row" id="home-stats"></div>
+    <div id="home-insight"></div>
     <div id="home-alerts"><div class="loading"><span class="spinner"></span>Sincronizando red...</div></div>
     <div class="glass-wrap primary"><button class="glass-inner" onclick="showScreen('menu')">📋 Registrar ayer</button></div>
     <div class="glass-wrap secondary"><button class="glass-inner" onclick="showScreen('consult-menu')">🔍 Consultar bases de datos</button></div>
@@ -364,6 +381,7 @@
   </div>
 
   <div class="screen" id="screen-iniciativas">
+    <div class="carousel-hint">◀ desliza para ver cada carril ▶</div>
     <div id="init-list"><div class="loading"><span class="spinner"></span>Leyendo nodos...</div></div>
   </div>
 
@@ -786,13 +804,70 @@ function handleBack(){
 
 async function loadHomeSummary(){
   document.getElementById('today-date').textContent = new Date().toLocaleDateString('es-MX',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  const data = await notionQuery(DB.iniciativas);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const thirtyAgo = new Date(); thirtyAgo.setDate(thirtyAgo.getDate()-30);
+  const thirtyAgoStr = thirtyAgo.toISOString().split('T')[0];
+
+  const [data, skinData, planData] = await Promise.all([
+    notionQuery(DB.iniciativas),
+    notionQuery(DB.skincare, {and:[{property:'Fecha',date:{on_or_after:thirtyAgoStr}},{property:'Fecha',date:{on_or_before:todayStr}}]}),
+    notionQuery(DB.planDiario, {property:'Fecha', date:{equals:todayStr}}),
+  ]);
   const pages = data.results || [];
   const stale = pages.filter(p=>{
     const estado = getProp(p,'Estado');
     if(estado==='Backburner'||estado==='Completado') return false;
     return daysSince(getProp(p,'Última vez tocado')) >= 7;
   }).sort((a,b)=>daysSince(getProp(b,'Última vez tocado'))-daysSince(getProp(a,'Última vez tocado')));
+
+  // --- Stat 1: Iniciativas activas ---
+  const activeInits = pages.filter(p=>{ const e=getProp(p,'Estado'); return e!=='Backburner' && e!=='Completado'; });
+  const activePct = pages.length ? Math.round(activeInits.length/pages.length*100) : 0;
+
+  // --- Stat 2: Racha Skin Care (días consecutivos con AM y PM completados, terminando ayer) ---
+  const skinRows = skinData.results || [];
+  let skinStreak = 0;
+  for(let i=1; i<=30; i++){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const dStr = d.toISOString().split('T')[0];
+    const row = skinRows.find(p=>getProp(p,'Fecha')===dStr);
+    const done = row && p_am(row) && p_pm(row);
+    if(done) skinStreak++; else break;
+  }
+  function p_am(p){ return p.properties['AM Completado']?.checkbox===true; }
+  function p_pm(p){ return p.properties['PM Completado']?.checkbox===true; }
+
+  // --- Stat 3: Pendientes hoy (Plan Diario) ---
+  const planRows = (planData.results || []).filter(p=>p);
+  const planTotal = planRows.length;
+  const planDone = planRows.filter(p=>p.properties['Hecho']?.checkbox===true).length;
+  const planPending = planTotal - planDone;
+  const planPct = planTotal ? Math.round(planDone/planTotal*100) : 0;
+
+  document.getElementById('home-stats').innerHTML = `
+    <div class="stat-card">
+      ${ringHTML(activePct, '#14B87D', '#F0C24B', activeInits.length, 'rgba(20,184,125,.5)')}
+      <div class="stat-label">Iniciativas activas</div>
+    </div>
+    <div class="stat-card">
+      ${ringHTML(Math.min(skinStreak/21*100,100), '#F0C24B', '#FFDE7A', '🔥'+skinStreak, 'rgba(240,194,75,.5)')}
+      <div class="stat-label">Racha Skin Care</div>
+    </div>
+    <div class="stat-card">
+      ${ringHTML(planPct, '#3DDC97', '#14B87D', planPending, 'rgba(61,220,151,.5)')}
+      <div class="stat-label">Pendientes hoy</div>
+    </div>
+  `;
+
+  // --- Insight callout — solo si hay un patrón real, una línea, sin culpa ---
+  const insightBox = document.getElementById('home-insight');
+  if(skinStreak>=3){
+    insightBox.innerHTML = `<div class="glow-panel state-ok" style="padding:12px 18px;margin-bottom:14px;"><div class="alert-line" style="border:none;padding:0;font-size:14px;"><span class="signal-dot green"></span>Racha de Skin Care de ${skinStreak} días — nivel constante.</div></div>`;
+  } else if(stale.length>=3){
+    insightBox.innerHTML = `<div class="glow-panel state-alert" style="padding:12px 18px;margin-bottom:14px;"><div class="alert-line" style="border:none;padding:0;font-size:14px;"><span class="signal-dot red"></span>${stale.length} iniciativas llevan 7+ días sin tocarse.</div></div>`;
+  } else {
+    insightBox.innerHTML = '';
+  }
 
   const box = document.getElementById('home-alerts');
   if(stale.length===0){
@@ -854,7 +929,7 @@ function renderIniciativas(){
       <div class="glass-wrap save-glass" id="save-wrap-${id}" style="display:none"><button class="glass-inner" id="save-${id}" onclick="saveIniciativa('${id}')">Guardar</button></div>
     </div>`;
   }).join('');
-  document.getElementById('init-list').innerHTML = html;
+  document.getElementById('init-list').innerHTML = `<div class="init-carousel">${html}</div>`;
   setTimeout(autoExpandAll, 50);
 }
 function setWorked(id, worked){
