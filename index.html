@@ -68,7 +68,27 @@
   }
   .back-btn:active{background:rgba(20,184,125,.18);}
 
-  .container{padding:8px 16px 20px; max-width:600px; margin:0 auto;}
+  .container{padding:8px 16px 96px; max-width:600px; margin:0 auto;}
+
+  /* === BOTTOM NAV — barra fija, complementa el back-btn, no lo reemplaza === */
+  .bottom-nav{
+    position:fixed; bottom:0; left:0; right:0; z-index:60; max-width:600px; margin:0 auto;
+    display:flex; justify-content:space-around;
+    padding:9px 6px calc(env(safe-area-inset-bottom, 0px) + 9px);
+    background:linear-gradient(0deg, rgba(10,23,18,.97) 0%, rgba(10,23,18,.88) 75%, rgba(10,23,18,.4) 100%);
+    backdrop-filter:blur(18px) saturate(140%); -webkit-backdrop-filter:blur(18px) saturate(140%);
+    border-top:1px solid var(--panel-border);
+  }
+  .bn-item{
+    display:flex; flex-direction:column; align-items:center; gap:3px; flex:1;
+    background:none; border:none; color:var(--text-dim); cursor:pointer;
+    font-family:var(--font-mono); font-size:9px; text-transform:uppercase; letter-spacing:.03em;
+    padding:5px 4px 3px; border-radius:12px; transition:color .25s;
+  }
+  .bn-item .bn-icon{font-size:19px; opacity:.55; filter:grayscale(.5); transition:all .25s; line-height:1;}
+  .bn-item.active{color:var(--synapse);}
+  .bn-item.active .bn-icon{opacity:1; filter:none; transform:translateY(-1px); text-shadow:0 0 10px rgba(20,184,125,.6);}
+  .bn-item:active{transform:scale(.94);}
   .screen{display:none;}
   .screen.active{display:block; animation:fade-in .35s ease;}
   @keyframes fade-in{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
@@ -218,6 +238,27 @@
   .strategy-h3{font-family:var(--font-display); font-size:15.5px; font-weight:600; color:var(--pulse); margin:16px 0 8px;}
   .strategy-p{font-size:15px; line-height:1.65; color:#C5D9CE; margin:6px 0;}
   .strategy-table{width:100%; border-collapse:collapse; margin:10px 0 16px; font-size:12.5px; overflow-x:auto; display:block;}
+  /* Skin Care — notification-card style dentro de Consultar */
+  .skin-notif{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:16px;
+    padding:14px 16px; margin-bottom:10px; backdrop-filter:blur(12px);
+    display:flex; align-items:center; gap:13px;
+  }
+  .skin-notif.has-alert{border-color:rgba(212,99,79,.35); box-shadow:0 0 18px rgba(212,99,79,.07);}
+  .skin-notif-icon{
+    width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+    background:rgba(20,184,125,.08); border:1px solid rgba(20,184,125,.2); font-size:19px; flex-shrink:0;
+  }
+  .skin-notif-body{flex:1; min-width:0;}
+  .skin-notif-title{font-family:var(--font-display); font-size:15px; font-weight:600;}
+  .skin-notif-meta{font-family:var(--font-mono); font-size:11px; color:var(--text-dim); margin-top:1px;}
+  .skin-notif-alert{font-size:12px; color:var(--alert); margin-top:4px;}
+  .skin-notif-status{display:flex; gap:6px; flex-shrink:0;}
+  .skin-pill{
+    font-family:var(--font-mono); font-size:10px; font-weight:600; padding:4px 9px; border-radius:20px;
+  }
+  .skin-pill.on{background:rgba(20,184,125,.12); color:var(--synapse); border:1px solid rgba(20,184,125,.3);}
+  .skin-pill.off{background:rgba(155,176,165,.08); color:var(--text-faint); border:1px solid rgba(155,176,165,.18);}
   .strategy-table td{border:1px solid var(--panel-border); padding:8px 10px; color:#C5D9CE; white-space:nowrap;}
   .strategy-table tr:first-child td{background:rgba(20,184,125,.08); font-weight:600; color:var(--synapse); font-family:var(--font-mono); font-size:11px; text-transform:uppercase;}
 
@@ -486,6 +527,14 @@
   </div>
 
 </div>
+
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bn-item" id="bn-home" onclick="goHome()"><span class="bn-icon">🏠</span>Home</button>
+  <button class="bn-item" id="bn-menu" onclick="showScreen('menu')"><span class="bn-icon">📋</span>Registrar</button>
+  <button class="bn-item" id="bn-consult" onclick="showScreen('consult-menu')"><span class="bn-icon">🔍</span>Consultar</button>
+  <button class="bn-item" id="bn-plan" onclick="openPlanHoy()"><span class="bn-icon">✅</span>Plan Hoy</button>
+</nav>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -791,6 +840,18 @@ function showScreen(id){
     diario:['💌 Diario de Pareja','Reflexión del día']};
   document.getElementById('topbar-title').textContent = titles[id][0];
   document.getElementById('topbar-sub').textContent = titles[id][1];
+  updateBottomNav(id);
+}
+function updateBottomNav(id){
+  const groups = {
+    'bn-home':   ['home'],
+    'bn-menu':   ['menu','iniciativas','libros','asistentes','mood','skincare'],
+    'bn-consult':['consult-menu','view','estrategia','habitos','diario'],
+    'bn-plan':   ['plan-hoy'],
+  };
+  Object.keys(groups).forEach(btnId=>{
+    document.getElementById(btnId).classList.toggle('active', groups[btnId].includes(id));
+  });
 }
 function goHome(){ showScreen('home'); loadHomeSummary(); }
 function handleBack(){
@@ -1214,6 +1275,20 @@ async function viewEstrategia(){
     <div style="text-align:center;margin-top:12px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint)">Vista simplificada · para el detalle completo abre Notion</span></div>`;
 }
 
+// Paleta determinística por carril — mismo carril siempre mismo color, sin depender de orden de datos
+const CARRIL_PALETTE = [
+  {bg:'rgba(20,184,125,.14)', bd:'rgba(20,184,125,.4)', tx:'#3DDC97'},
+  {bg:'rgba(240,194,75,.14)', bd:'rgba(240,194,75,.4)', tx:'#F0C24B'},
+  {bg:'rgba(212,99,79,.14)',  bd:'rgba(212,99,79,.4)',  tx:'#E08A73'},
+  {bg:'rgba(255,222,122,.12)',bd:'rgba(255,222,122,.35)',tx:'#FFDE7A'},
+  {bg:'rgba(13,107,74,.2)',   bd:'rgba(13,107,74,.5)',  tx:'#5FE3B0'},
+  {bg:'rgba(155,176,165,.12)',bd:'rgba(155,176,165,.3)', tx:'#C5D9CE'},
+];
+function carrilStyle(carril){
+  let hash = 0;
+  for(let i=0;i<carril.length;i++){ hash = (hash*31 + carril.charCodeAt(i)) >>> 0; }
+  return CARRIL_PALETTE[hash % CARRIL_PALETTE.length];
+}
 async function viewIniciativas(){
   showScreen('view');
   const el = document.getElementById('view-content');
@@ -1221,10 +1296,15 @@ async function viewIniciativas(){
   const data = await notionQuery(DB.iniciativas);
   const pages = (data.results||[]).sort((a,b)=>daysSince(getProp(b,'Última vez tocado'))-daysSince(getProp(a,'Última vez tocado')));
   el.innerHTML = pages.map(p=>{
-    const name = getProp(p,'Iniciativa'); const carril = getProp(p,'Carril')||'';
+    const name = getProp(p,'Iniciativa'); const carril = getProp(p,'Carril')||'—';
     const next = getProp(p,'Próxima acción mínima')||'—'; const last = getProp(p,'Última acción')||'—';
     const d = daysSince(getProp(p,'Última vez tocado'));
-    return `<div class="view-card"><h3>${name}</h3><div class="meta">${carril} · hace ${d===999?'—':d+'d'}</div>
+    const cs = carrilStyle(carril);
+    return `<div class="view-card"><h3>${name}</h3>
+      <div class="meta" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-family:var(--font-mono);font-size:10.5px;font-weight:600;padding:4px 11px;border-radius:20px;text-transform:uppercase;letter-spacing:.02em;background:${cs.bg};border:1px solid ${cs.bd};color:${cs.tx}">${carril}</span>
+        <span>hace ${d===999?'—':d+'d'}</span>
+      </div>
       <div class="body-text"><b>Última:</b> ${last}<br><b>Próxima:</b> ${next}</div></div>`;
   }).join('') || '<div class="loading">Sin datos.</div>';
 }
@@ -1251,9 +1331,15 @@ async function viewAsistentes(){
     const p = pages.find(pg=>getProp(pg,'Asistente')===name);
     const last = p ? getProp(p,'Última vez utilizado') : null;
     const d = daysSince(last);
-    return `<div class="view-card"><h3>${name}</h3><div class="meta">${last?`Último uso hace ${d}d`:'Sin registro'}</div></div>`;
+    const isStale = last && d>=30;
+    const style = isStale ? 'border-color:rgba(240,194,75,.35);box-shadow:0 0 20px rgba(240,194,75,.07)' : '';
+    const badge = isStale ? `<span style="font-family:var(--font-mono);font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;background:rgba(240,194,75,.12);color:var(--ignite);border:1px solid rgba(240,194,75,.3);margin-left:8px">${d}d sin usar</span>` : '';
+    return `<div class="view-card" style="${style}"><h3>${name}${badge}</h3><div class="meta">${last?`Último uso hace ${d}d`:'Sin registro'}</div></div>`;
   }).join('');
 }
+const MOOD_COLOR = {
+  '😎 Great':'#3DDC97', '🙂 Good':'#14B87D', '😐 Okay':'#9BB0A5', '😕 Not good':'#F0C24B', '😣 Awful':'#D4634F'
+};
 async function viewMood(){
   showScreen('view');
   const el = document.getElementById('view-content');
@@ -1263,12 +1349,36 @@ async function viewMood(){
     const da = getProp(a,'Cuándo')||''; const db_ = getProp(b,'Cuándo')||'';
     return db_.localeCompare(da);
   }).slice(0,10);
-  el.innerHTML = pages.map(p=>{
+
+  // Barra apilada semanal — distribución de valencia AM+PM en los últimos 7 registros
+  const recent7 = pages.slice(0,7);
+  const counts = {};
+  recent7.forEach(p=>{
+    [getProp(p,'Mood AM'), getProp(p,'Mood PM')].forEach(m=>{ if(m) counts[m] = (counts[m]||0)+1; });
+  });
+  const total = Object.values(counts).reduce((a,b)=>a+b,0);
+  const order = ['😎 Great','🙂 Good','😐 Okay','😕 Not good','😣 Awful'];
+  const segs = order.filter(k=>counts[k]).map(k=>
+    `<div style="flex:${counts[k]};background:${MOOD_COLOR[k]};height:100%" title="${k}: ${counts[k]}"></div>`
+  ).join('');
+  const legend = order.filter(k=>counts[k]).map(k=>
+    `<span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:10.5px;color:var(--text-dim)">
+      <span style="width:8px;height:8px;border-radius:50%;background:${MOOD_COLOR[k]}"></span>${k.split(' ')[1]} ${counts[k]}
+    </span>`
+  ).join('');
+  const stackedBar = total>0 ? `
+    <div class="h-panel" style="margin-bottom:14px">
+      <div class="h-panel-title"><span class="h-dot"></span>Distribución de la semana (AM+PM)</div>
+      <div style="display:flex;height:14px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.04)">${segs}</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">${legend}</div>
+    </div>` : '';
+
+  el.innerHTML = stackedBar + (pages.map(p=>{
     const fecha = getProp(p,'Fecha')||''; const am = getProp(p,'Mood AM')||''; const pm = getProp(p,'Mood PM')||'';
     const emo = getProp(p,'Emociones del día'); const emoStr = Array.isArray(emo) ? emo.join(', ') : (emo||'');
     return `<div class="view-card"><h3>${fecha}</h3><div class="meta">AM: ${am}  ·  PM: ${pm}</div>
       <div class="body-text">${emoStr}</div></div>`;
-  }).join('') || '<div class="loading">Sin datos.</div>';
+  }).join('') || '<div class="loading">Sin datos.</div>');
 }
 
 // ====== NOTION TABLE PARSING ======
@@ -1493,11 +1603,22 @@ async function viewSkincare(){
   }).slice(0,10);
   el.innerHTML = pages.map(p=>{
     const dia = getProp(p,'Día')||''; const fase = getProp(p,'Fase')||'';
-    const am = p.properties['AM Completado']?.checkbox===true ? '✅' : '⬜';
-    const pm = p.properties['PM Completado']?.checkbox===true ? '✅' : '⬜';
+    const amOn = p.properties['AM Completado']?.checkbox===true;
+    const pmOn = p.properties['PM Completado']?.checkbox===true;
     const alertas = getProp(p,'Señales de alerta')||[];
-    return `<div class="view-card"><h3>${dia}</h3><div class="meta">${fase}</div>
-      <div class="body-text">AM ${am} · PM ${pm}${alertas.length?' · ⚠️ '+alertas.join(', '):''}</div></div>`;
+    const hasAlert = alertas.length>0;
+    return `<div class="skin-notif ${hasAlert?'has-alert':''}">
+      <div class="skin-notif-icon">🧴</div>
+      <div class="skin-notif-body">
+        <div class="skin-notif-title">${dia}</div>
+        <div class="skin-notif-meta">${fase}</div>
+        ${hasAlert?`<div class="skin-notif-alert">⚠️ ${alertas.join(', ')}</div>`:''}
+      </div>
+      <div class="skin-notif-status">
+        <span class="skin-pill ${amOn?'on':'off'}">AM</span>
+        <span class="skin-pill ${pmOn?'on':'off'}">PM</span>
+      </div>
+    </div>`;
   }).join('') || '<div class="loading">Sin datos.</div>';
 }
 
@@ -1953,6 +2074,7 @@ function renderHabitos(matrix, nDays, year, month){
 }
 
 loadHomeSummary();
+updateBottomNav('home');
 updateBadges();
 loadPrioritiesPanel();
 </script>
