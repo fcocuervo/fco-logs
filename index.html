@@ -163,11 +163,19 @@
   }
   .month-tab.active{background:linear-gradient(135deg, rgba(20,184,125,.2), rgba(13,107,74,.3)); border-color:var(--synapse); color:var(--text); box-shadow:0 0 12px rgba(20,184,125,.2);}
   .stats-row{display:flex; gap:10px; margin-bottom:14px;}
-  .stat-card{flex:1; background:var(--panel); border:1px solid var(--panel-border); border-radius:16px; padding:14px 10px; text-align:center; backdrop-filter:blur(12px);}
+  .stat-card{flex:1; background:var(--panel); border:1px solid var(--panel-border); border-radius:16px; padding:14px 10px 12px; text-align:center; backdrop-filter:blur(12px);}
   .stat-value{font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--synapse); text-shadow:0 0 16px rgba(20,184,125,.5);}
   .stat-value.orange{color:var(--ignite); text-shadow:0 0 16px rgba(240,194,75,.5);}
   .stat-value.green{color:#3DDC97; text-shadow:0 0 16px rgba(61,220,151,.5);}
   .stat-label{font-family:var(--font-mono); font-size:9px; color:var(--text-dim); margin-top:4px; text-transform:uppercase;}
+
+  /* === RING — anillo de progreso circular, reemplaza números planos en stat-cards === */
+  .ring-wrap{position:relative; width:72px; height:72px; margin:0 auto;}
+  .ring-wrap svg{transform:rotate(-90deg); overflow:visible;}
+  .ring-bg{fill:none; stroke:rgba(255,255,255,.06);}
+  .ring-fg{fill:none; stroke-linecap:round; transition:stroke-dashoffset 1.1s cubic-bezier(.22,.9,.3,1);}
+  .ring-center{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-weight:700; font-size:15px; letter-spacing:-.01em;}
   .h-panel{background:var(--panel); border:1px solid var(--panel-border); border-radius:18px; padding:16px 14px; margin-bottom:14px; backdrop-filter:blur(12px);}
   .h-panel-title{font-family:var(--font-display); font-size:13.5px; font-weight:600; margin-bottom:12px; display:flex; align-items:center; gap:8px;}
   .h-dot{width:7px;height:7px;border-radius:50%;background:var(--synapse);box-shadow:0 0 8px var(--synapse); flex-shrink:0;}
@@ -1719,6 +1727,32 @@ async function selectHabitosMonth(idx){
   renderHabitos(matrix, nDays, year, month);
 }
 
+let ringCounter = 0;
+/**
+ * Anillo de progreso SVG reutilizable.
+ * pct: 0-100 (qué tanto se llena el anillo)
+ * gradFrom/gradTo: colores del stroke (usa las variables de la paleta jade/oro)
+ * centerText: lo que se muestra al centro (puede ser "72%", "🔥 5", un número, etc.)
+ */
+function ringHTML(pct, gradFrom, gradTo, centerText, glow){
+  const id = 'rg' + (ringCounter++);
+  const size = 72, stroke = 7, r = (size - stroke) / 2, c = 2 * Math.PI * r;
+  const clamped = Math.max(0, Math.min(100, pct));
+  const offset = c - (clamped / 100) * c;
+  return `<div class="ring-wrap">
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="${gradFrom}"/><stop offset="100%" stop-color="${gradTo}"/>
+      </linearGradient></defs>
+      <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${stroke}"/>
+      <circle class="ring-fg" cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${stroke}"
+        stroke="url(#${id})" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+        style="${glow?`filter:drop-shadow(0 0 5px ${glow})`:''}"/>
+    </svg>
+    <div class="ring-center">${centerText}</div>
+  </div>`;
+}
+
 function renderHabitos(matrix, nDays, year, month){
   const today = new Date();
   const isCurrentMonth = today.getFullYear()===year && today.getMonth()+1===month;
@@ -1783,9 +1817,18 @@ function renderHabitos(matrix, nDays, year, month){
 
   document.getElementById('habitos-content').innerHTML = `
     <div class="stats-row">
-      <div class="stat-card"><div class="stat-value">${avgPct}%</div><div class="stat-label">Cumplimiento</div></div>
-      <div class="stat-card"><div class="stat-value orange">🔥 ${curStreak}</div><div class="stat-label">Racha actual</div></div>
-      <div class="stat-card"><div class="stat-value green">${bestStreak}</div><div class="stat-label">Mejor racha</div></div>
+      <div class="stat-card">
+        ${ringHTML(avgPct, '#14B87D', '#F0C24B', avgPct+'%', 'rgba(20,184,125,.5)')}
+        <div class="stat-label">Cumplimiento</div>
+      </div>
+      <div class="stat-card">
+        ${ringHTML(Math.min(curStreak/21*100,100), '#F0C24B', '#FFDE7A', '🔥'+curStreak, 'rgba(240,194,75,.5)')}
+        <div class="stat-label">Racha actual</div>
+      </div>
+      <div class="stat-card">
+        ${ringHTML(Math.min(bestStreak/21*100,100), '#3DDC97', '#14B87D', bestStreak, 'rgba(61,220,151,.5)')}
+        <div class="stat-label">Mejor racha</div>
+      </div>
     </div>
 
     <div class="h-panel">
