@@ -869,10 +869,13 @@ async function loadHomeSummary(){
   const thirtyAgo = new Date(); thirtyAgo.setDate(thirtyAgo.getDate()-30);
   const thirtyAgoStr = thirtyAgo.toISOString().split('T')[0];
 
-  const [data, skinData, planData] = await Promise.all([
+  const [data, skinData, planData, planRangeData, moodRangeData, diarioRangeData] = await Promise.all([
     notionQuery(DB.iniciativas),
     notionQuery(DB.skincare, {and:[{property:'Fecha',date:{on_or_after:thirtyAgoStr}},{property:'Fecha',date:{on_or_before:todayStr}}]}),
     notionQuery(DB.planDiario, {property:'Fecha', date:{equals:todayStr}}),
+    notionQuery(DB.planDiario, {and:[{property:'Fecha',date:{on_or_after:thirtyAgoStr}},{property:'Fecha',date:{on_or_before:todayStr}}]}),
+    notionQuery(DB.mood, {and:[{property:'Cuándo',date:{on_or_after:thirtyAgoStr}},{property:'Cuándo',date:{on_or_before:todayStr}}]}),
+    notionQuery(DB.diario, {and:[{property:'Fecha',date:{on_or_after:thirtyAgoStr}},{property:'Fecha',date:{on_or_before:todayStr}}]}),
   ]);
   const pages = data.results || [];
   const stale = pages.filter(p=>{
@@ -885,18 +888,37 @@ async function loadHomeSummary(){
   const activeInits = pages.filter(p=>{ const e=getProp(p,'Estado'); return e!=='Backburner' && e!=='Completado'; });
   const activePct = pages.length ? Math.round(activeInits.length/pages.length*100) : 0;
 
-  // --- Stat 2: Racha Skin Care (días consecutivos con AM y PM completados, terminando ayer) ---
+  // --- Stat 2: Racha de Hábitos (días consecutivos con >=60% de HABITOS_CONFIG cumplidos, terminando ayer) ---
+  // Umbral de "día en racha": 60% o más de los hábitos diarios cerrados (no requiere el 100%).
+  const HABIT_STREAK_THRESHOLD = 60;
   const skinRows = skinData.results || [];
-  let skinStreak = 0;
+  const planRangeRows = planRangeData.results || [];
+  const moodRangeRows = moodRangeData.results || [];
+  const diarioRangeRows = diarioRangeData.results || [];
+  function habitDailyPct(dayStr){
+    let done=0, total=0;
+    HABITOS_CONFIG.forEach(h=>{
+      total++;
+      let isDone=false;
+      if(h.source==='plandiario'){
+        isDone = planRangeRows.some(p=>getProp(p,'Fecha')===dayStr && h.match.test(getProp(p,'Actividad')||'') && p.properties['Hecho']?.checkbox===true);
+      } else if(h.source==='skincare'){
+        isDone = skinRows.some(p=>getProp(p,'Fecha')===dayStr && p.properties[h.field]?.checkbox===true);
+      } else if(h.source==='mood'){
+        isDone = moodRangeRows.some(p=>getProp(p,'Cuándo')===dayStr);
+      } else if(h.source==='diario'){
+        isDone = diarioRangeRows.some(p=>getProp(p,'Fecha')===dayStr);
+      }
+      if(isDone) done++;
+    });
+    return total ? (done/total*100) : 0;
+  }
+  let habitStreak = 0;
   for(let i=1; i<=30; i++){
     const d = new Date(); d.setDate(d.getDate()-i);
     const dStr = d.toISOString().split('T')[0];
-    const row = skinRows.find(p=>getProp(p,'Fecha')===dStr);
-    const done = row && p_am(row) && p_pm(row);
-    if(done) skinStreak++; else break;
+    if(habitDailyPct(dStr) >= HABIT_STREAK_THRESHOLD) habitStreak++; else break;
   }
-  function p_am(p){ return p.properties['AM Completado']?.checkbox===true; }
-  function p_pm(p){ return p.properties['PM Completado']?.checkbox===true; }
 
   // --- Stat 3: Pendientes hoy (Plan Diario) ---
   const planRows = (planData.results || []).filter(p=>p);
@@ -911,8 +933,8 @@ async function loadHomeSummary(){
       <div class="stat-label">Iniciativas activas</div>
     </div>
     <div class="stat-card">
-      ${ringHTML(Math.min(skinStreak/21*100,100), '#F0C24B', '#FFDE7A', '🔥'+skinStreak, 'rgba(240,194,75,.5)')}
-      <div class="stat-label">Racha Skin Care</div>
+      ${ringHTML(Math.min(habitStreak/21*100,100), '#F0C24B', '#FFDE7A', '🔥'+habitStreak, 'rgba(240,194,75,.5)')}
+      <div class="stat-label">Racha de Hábitos</div>
     </div>
     <div class="stat-card">
       ${ringHTML(planPct, '#3DDC97', '#14B87D', planPending, 'rgba(61,220,151,.5)')}
@@ -922,8 +944,8 @@ async function loadHomeSummary(){
 
   // --- Insight callout — solo si hay un patrón real, una línea, sin culpa ---
   const insightBox = document.getElementById('home-insight');
-  if(skinStreak>=3){
-    insightBox.innerHTML = `<div class="glow-panel state-ok" style="padding:12px 18px;margin-bottom:14px;"><div class="alert-line" style="border:none;padding:0;font-size:14px;"><span class="signal-dot green"></span>Racha de Skin Care de ${skinStreak} días — nivel constante.</div></div>`;
+  if(habitStreak>=3){
+    insightBox.innerHTML = `<div class="glow-panel state-ok" style="padding:12px 18px;margin-bottom:14px;"><div class="alert-line" style="border:none;padding:0;font-size:14px;"><span class="signal-dot green"></span>Racha de Hábitos de ${habitStreak} días — ${HABIT_STREAK_THRESHOLD}%+ cumplido cada día.</div></div>`;
   } else if(stale.length>=3){
     insightBox.innerHTML = `<div class="glow-panel state-alert" style="padding:12px 18px;margin-bottom:14px;"><div class="alert-line" style="border:none;padding:0;font-size:14px;"><span class="signal-dot red"></span>${stale.length} iniciativas llevan 7+ días sin tocarse.</div></div>`;
   } else {
