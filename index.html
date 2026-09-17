@@ -68,27 +68,28 @@
   }
   .back-btn:active{background:rgba(20,184,125,.18);}
 
-  .container{padding:8px 16px 96px; max-width:600px; margin:0 auto;}
+  .container{padding:8px 16px 148px; max-width:600px; margin:0 auto;}
 
-  /* === BOTTOM NAV — barra fija, complementa el back-btn, no lo reemplaza === */
+  /* === BOTTOM NAV — barra fija, opaca de borde a borde, nunca deja ver contenido detrás === */
   .bottom-nav{
     position:fixed; bottom:0; left:0; right:0; z-index:60; max-width:600px; margin:0 auto;
     display:flex; justify-content:space-around;
-    padding:9px 6px calc(env(safe-area-inset-bottom, 0px) + 9px);
-    background:linear-gradient(0deg, rgba(10,23,18,.97) 0%, rgba(10,23,18,.88) 75%, rgba(10,23,18,.4) 100%);
+    padding:12px 6px calc(env(safe-area-inset-bottom, 0px) + 14px);
+    background:rgba(9,20,16,.98);
     backdrop-filter:blur(18px) saturate(140%); -webkit-backdrop-filter:blur(18px) saturate(140%);
     border-top:1px solid var(--panel-border);
+    box-shadow:0 -8px 24px rgba(0,0,0,.35);
   }
   .bn-item{
-    display:flex; flex-direction:column; align-items:center; gap:3px; flex:1;
+    display:flex; flex-direction:column; align-items:center; gap:5px; flex:1;
     background:none; border:none; color:var(--text-dim); cursor:pointer;
-    font-family:var(--font-mono); font-size:9px; text-transform:uppercase; letter-spacing:.03em;
-    padding:5px 4px 3px; border-radius:12px; transition:color .25s;
+    font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.03em;
+    padding:6px 4px 4px; border-radius:14px; transition:color .25s;
   }
-  .bn-item .bn-icon{font-size:19px; opacity:.55; filter:grayscale(.5); transition:all .25s; line-height:1;}
+  .bn-item .bn-icon{font-size:26px; opacity:.55; filter:grayscale(.5); transition:all .25s; line-height:1;}
   .bn-item.active{color:var(--synapse);}
   .bn-item.active .bn-icon{opacity:1; filter:none; transform:translateY(-1px); text-shadow:0 0 10px rgba(20,184,125,.6);}
-  .bn-item:active{transform:scale(.94);}
+  .bn-item:active{transform:scale(.94); background:rgba(20,184,125,.08);}
   .screen{display:none;}
   .screen.active{display:block; animation:fade-in .35s ease;}
   @keyframes fade-in{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
@@ -409,6 +410,7 @@
     <div class="stats-row" id="home-stats"></div>
     <div id="home-insight"></div>
     <div id="home-alerts"><div class="loading"><span class="spinner"></span>Sincronizando red...</div></div>
+    <div id="week-review-home"></div>
     <div class="glass-wrap primary"><button class="glass-inner" onclick="showScreen('menu')">📋 Registrar ayer</button></div>
     <div class="glass-wrap secondary"><button class="glass-inner" onclick="showScreen('consult-menu')">🔍 Consultar bases de datos</button></div>
     <div class="glass-wrap tertiary"><button class="glass-inner" onclick="openPlanHoy()">✅ Plan de Hoy</button></div>
@@ -883,7 +885,7 @@ function updateBottomNav(id){
     document.getElementById(btnId).classList.toggle('active', groups[btnId].includes(id));
   });
 }
-function goHome(){ showScreen('home'); loadHomeSummary(); }
+function goHome(){ showScreen('home'); loadHomeSummary(); loadWeekReview('home'); }
 function handleBack(){
   const viewScreens = ['view','estrategia','plan-hoy','habitos'];
   const registerScreens = ['skincare'];
@@ -1879,11 +1881,15 @@ async function saveDiario(existingId){
 }
 
 // ====== REVISION SEMANAL — circulos Dom-Sab, checklist de Plan Diario por dia ======
+// Vive duplicada en Home (scope 'home') y en Habitos (scope 'hab') — mismo dato, dos montajes con ids propios.
 const WEEKDAY_LABELS = ['D','L','M','M','J','V','S'];
 let weekReviewRows = [];
-async function loadWeekReview(){
-  const container = document.getElementById('week-review');
+async function loadWeekReview(scope){
+  const containerId = scope==='home' ? 'week-review-home' : 'week-review';
+  const container = document.getElementById(containerId);
   if(!container) return;
+  container.innerHTML = `<div class="loading"><span class="spinner"></span>Cargando revisión semanal...</div>`;
+
   const today = new Date();
   const sunday = new Date(today); sunday.setDate(today.getDate() - today.getDay());
   const days = [];
@@ -1892,6 +1898,16 @@ async function loadWeekReview(){
   const endStr = days[6].toISOString().split('T')[0];
   const data = await notionQuery(DB.planDiario, {and:[{property:'Fecha',date:{on_or_after:startStr}},{property:'Fecha',date:{on_or_before:endStr}}]});
   weekReviewRows = data.results || [];
+  renderWeekReview(scope);
+}
+function renderWeekReview(scope){
+  const containerId = scope==='home' ? 'week-review-home' : 'week-review';
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  const today = new Date();
+  const sunday = new Date(today); sunday.setDate(today.getDate() - today.getDay());
+  const days = [];
+  for(let i=0;i<7;i++){ const d = new Date(sunday); d.setDate(sunday.getDate()+i); days.push(d); }
   const todayStr = today.toISOString().split('T')[0];
 
   const circles = days.map(d=>{
@@ -1903,7 +1919,7 @@ async function loadWeekReview(){
     const isFuture = dStr > todayStr;
     const isToday = dStr === todayStr;
     const ringColor = pct===null ? 'rgba(255,255,255,.14)' : pct>=80?'#14B87D' : pct>=50?'#F0C24B' : '#D4634F';
-    return `<button class="week-day-circle ${isToday?'is-today':''}" ${isFuture?'disabled':''} onclick="selectWeekDay('${dStr}')" id="wdc-${dStr}">
+    return `<button class="week-day-circle ${isToday?'is-today':''}" ${isFuture?'disabled':''} onclick="selectWeekDay('${dStr}','${scope}')" id="wdc-${scope}-${dStr}">
       <div class="wdc-ring" style="border-color:${ringColor}">${d.getDate()}</div>
       <div class="wdc-label">${WEEKDAY_LABELS[d.getDay()]}</div>
     </button>`;
@@ -1913,15 +1929,15 @@ async function loadWeekReview(){
     <div class="h-panel">
       <div class="h-panel-title"><span class="h-dot"></span>Revisión Semanal</div>
       <div class="week-day-row">${circles}</div>
-      <div id="week-day-detail"></div>
+      <div id="week-day-detail-${scope}"></div>
     </div>`;
-  selectWeekDay(todayStr);
+  selectWeekDay(todayStr, scope);
 }
-function selectWeekDay(dStr){
-  document.querySelectorAll('.week-day-circle').forEach(b=>b.classList.remove('active'));
-  const btn = document.getElementById('wdc-'+dStr);
+function selectWeekDay(dStr, scope){
+  document.querySelectorAll(`[id^="wdc-${scope}-"]`).forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById(`wdc-${scope}-${dStr}`);
   if(btn) btn.classList.add('active');
-  const detailEl = document.getElementById('week-day-detail');
+  const detailEl = document.getElementById('week-day-detail-'+scope);
   if(!detailEl) return;
   const dayRows = weekReviewRows.filter(p=>getProp(p,'Fecha')===dStr).sort((a,b)=>(getProp(a,'Hora')||'').localeCompare(getProp(b,'Hora')||''));
   if(dayRows.length===0){
@@ -1983,7 +1999,7 @@ function pad2(n){ return String(n).padStart(2,'0'); }
 
 async function openHabitos(){
   showScreen('habitos');
-  loadWeekReview();
+  loadWeekReview('hab');
   const tabsEl = document.getElementById('month-tabs');
   const now = new Date();
   let defaultIdx = HABITOS_MONTHS.findIndex(m=>m.year===now.getFullYear() && m.month===now.getMonth()+1);
@@ -2210,6 +2226,7 @@ function renderHabitos(matrix, nDays, year, month){
 }
 
 loadHomeSummary();
+loadWeekReview('home');
 updateBottomNav('home');
 updateBadges();
 loadPrioritiesPanel();
