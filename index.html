@@ -1884,8 +1884,11 @@ async function saveDiario(existingId){
 
 // ====== REVISION SEMANAL — circulos Dom-Sab, checklist de Plan Diario por dia ======
 // Vive duplicada en Home (scope 'home') y en Habitos (scope 'hab') — mismo dato, dos montajes con ids propios.
+// Por defecto todos los dias arrancan colapsados; un dia se despliega solo al tocarlo.
 const WEEKDAY_LABELS = ['D','L','M','M','J','V','S'];
 let weekReviewRows = [];
+let weekReviewActiveDay = {};
+
 async function loadWeekReview(scope){
   const containerId = scope==='home' ? 'week-review-home' : 'week-review';
   const container = document.getElementById(containerId);
@@ -1900,7 +1903,14 @@ async function loadWeekReview(scope){
   const endStr = days[6].toISOString().split('T')[0];
   const data = await notionQuery(DB.planDiario, {and:[{property:'Fecha',date:{on_or_after:startStr}},{property:'Fecha',date:{on_or_before:endStr}}]});
   weekReviewRows = data.results || [];
+  weekReviewActiveDay[scope] = null; // colapsado por defecto
   renderWeekReview(scope);
+}
+function dayPct(dStr){
+  const dayRows = weekReviewRows.filter(p=>getProp(p,'Fecha')===dStr);
+  const total = dayRows.length;
+  const done = dayRows.filter(p=>p.properties['Hecho']?.checkbox===true).length;
+  return {total, done, pct: total ? Math.round(done/total*100) : null};
 }
 function renderWeekReview(scope){
   const containerId = scope==='home' ? 'week-review-home' : 'week-review';
@@ -1914,15 +1924,12 @@ function renderWeekReview(scope){
 
   const circles = days.map(d=>{
     const dStr = d.toISOString().split('T')[0];
-    const dayRows = weekReviewRows.filter(p=>getProp(p,'Fecha')===dStr);
-    const total = dayRows.length;
-    const done = dayRows.filter(p=>p.properties['Hecho']?.checkbox===true).length;
-    const pct = total ? Math.round(done/total*100) : null;
+    const {pct} = dayPct(dStr);
     const isFuture = dStr > todayStr;
     const isToday = dStr === todayStr;
     const ringColor = pct===null ? 'rgba(255,255,255,.14)' : pct>=80?'#14B87D' : pct>=50?'#F0C24B' : '#D4634F';
     return `<button class="week-day-circle ${isToday?'is-today':''}" ${isFuture?'disabled':''} onclick="selectWeekDay('${dStr}','${scope}')" id="wdc-${scope}-${dStr}">
-      <div class="wdc-ring" style="border-color:${ringColor}">${d.getDate()}</div>
+      <div class="wdc-ring" id="wdc-ring-${scope}-${dStr}" style="border-color:${ringColor}">${d.getDate()}</div>
       <div class="wdc-label">${WEEKDAY_LABELS[d.getDay()]}</div>
     </button>`;
   }).join('');
@@ -1933,22 +1940,25 @@ function renderWeekReview(scope){
       <div class="week-day-row">${circles}</div>
       <div id="week-day-detail-${scope}"></div>
     </div>`;
-  selectWeekDay(todayStr, scope);
+  // sin auto-seleccion — arranca colapsado
 }
-let weekReviewActiveDay = {};
 function selectWeekDay(dStr, scope){
-  const detailEl = document.getElementById('week-day-detail-'+scope);
   const wasActive = weekReviewActiveDay[scope] === dStr;
   document.querySelectorAll(`[id^="wdc-${scope}-"]`).forEach(b=>b.classList.remove('active'));
 
   if(wasActive){
     weekReviewActiveDay[scope] = null;
+    const detailEl = document.getElementById('week-day-detail-'+scope);
     if(detailEl) detailEl.innerHTML = '';
     return;
   }
   weekReviewActiveDay[scope] = dStr;
   const btn = document.getElementById(`wdc-${scope}-${dStr}`);
   if(btn) btn.classList.add('active');
+  renderWeekDayDetail(dStr, scope);
+}
+function renderWeekDayDetail(dStr, scope){
+  const detailEl = document.getElementById('week-day-detail-'+scope);
   if(!detailEl) return;
   const dayRows = weekReviewRows.filter(p=>getProp(p,'Fecha')===dStr).sort((a,b)=>(getProp(a,'Hora')||'').localeCompare(getProp(b,'Hora')||''));
   if(dayRows.length===0){
@@ -1964,7 +1974,7 @@ function selectWeekDay(dStr, scope){
     const tc = TIPO_COLOR[tipo] || null;
     const borderStyle = tc ? `border-left:3px solid ${tc.tx}` : '';
     const pill = tc ? `<span class="tipo-pill" style="background:${tc.bg};border-color:${tc.bd};color:${tc.tx}">${tipo}</span>` : '';
-    return `<div class="plan-item ${hecho?'done':''}" style="${borderStyle};cursor:default;margin-bottom:8px">
+    return `<div class="plan-item ${hecho?'done':''}" style="${borderStyle};margin-bottom:8px" onclick="toggleWeekReviewItem('${p.id}','${scope}')">
       <div class="plan-checkbox ${hecho?'checked':''}">✓</div>
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -1976,6 +1986,30 @@ function selectWeekDay(dStr, scope){
     </div>`;
   }).join('');
   detailEl.innerHTML = `<div style="font-family:var(--font-mono);font-size:12px;color:var(--text-dim);margin:12px 0 10px">${done}/${dayRows.length} completadas</div>${items}`;
+}
+async function toggleWeekReviewItem(pageId, scope){
+  const item = weekReviewRows.find(p=>p.id===pageId);
+  if(!item) return;
+  const currentlyDone = item.properties['Hecho']?.checkbox === true;
+  const newVal = !currentlyDone;
+  const dStr = getProp(item,'Fecha');
+  // optimista: actualiza UI y estado local antes de que Notion responda
+  item.properties['Hecho'] = { checkbox: newVal };
+  renderWeekDayDetail(dStr, scope);
+  updateWeekDayRing(dStr, scope);
+  const res = await notionUpdate(pageId, { 'Hecho': { checkbox: newVal } });
+  if(!res.ok){
+    item.properties['Hecho'] = { checkbox: currentlyDone };
+    renderWeekDayDetail(dStr, scope);
+    updateWeekDayRing(dStr, scope);
+    toast('Error al guardar — reintenta');
+  }
+}
+function updateWeekDayRing(dStr, scope){
+  const ring = document.getElementById(`wdc-ring-${scope}-${dStr}`);
+  if(!ring) return;
+  const {pct} = dayPct(dStr);
+  ring.style.borderColor = pct===null ? 'rgba(255,255,255,.14)' : pct>=80?'#14B87D' : pct>=50?'#F0C24B' : '#D4634F';
 }
 
 // ====== HABITOS — analisis mensual ======
