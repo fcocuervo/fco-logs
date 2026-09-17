@@ -405,12 +405,12 @@
 <div class="container">
 
   <div class="screen active" id="screen-home">
+    <div id="week-review-home"></div>
     <div class="greeting">Buenos días, Francisco</div>
     <div class="date" id="today-date"></div>
     <div class="stats-row" id="home-stats"></div>
     <div id="home-insight"></div>
     <div id="home-alerts"><div class="loading"><span class="spinner"></span>Sincronizando red...</div></div>
-    <div id="week-review-home"></div>
     <div class="glass-wrap primary"><button class="glass-inner" onclick="showScreen('menu')">📋 Registrar ayer</button></div>
     <div class="glass-wrap secondary"><button class="glass-inner" onclick="showScreen('consult-menu')">🔍 Consultar bases de datos</button></div>
     <div class="glass-wrap tertiary"><button class="glass-inner" onclick="openPlanHoy()">✅ Plan de Hoy</button></div>
@@ -1933,11 +1933,20 @@ function renderWeekReview(scope){
     </div>`;
   selectWeekDay(todayStr, scope);
 }
+let weekReviewActiveDay = {};
 function selectWeekDay(dStr, scope){
+  const detailEl = document.getElementById('week-day-detail-'+scope);
+  const wasActive = weekReviewActiveDay[scope] === dStr;
   document.querySelectorAll(`[id^="wdc-${scope}-"]`).forEach(b=>b.classList.remove('active'));
+
+  if(wasActive){
+    weekReviewActiveDay[scope] = null;
+    if(detailEl) detailEl.innerHTML = '';
+    return;
+  }
+  weekReviewActiveDay[scope] = dStr;
   const btn = document.getElementById(`wdc-${scope}-${dStr}`);
   if(btn) btn.classList.add('active');
-  const detailEl = document.getElementById('week-day-detail-'+scope);
   if(!detailEl) return;
   const dayRows = weekReviewRows.filter(p=>getProp(p,'Fecha')===dStr).sort((a,b)=>(getProp(a,'Hora')||'').localeCompare(getProp(b,'Hora')||''));
   if(dayRows.length===0){
