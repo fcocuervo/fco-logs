@@ -68,28 +68,30 @@
   }
   .back-btn:active{background:rgba(20,184,125,.18);}
 
-  .container{padding:8px 16px 148px; max-width:600px; margin:0 auto;}
+  .container{padding:8px 16px 128px; max-width:600px; margin:0 auto;}
 
-  /* === BOTTOM NAV — barra fija, opaca de borde a borde, nunca deja ver contenido detrás === */
+  /* === BOTTOM NAV — capsula flotante estilo Threads: centrada, separada de bordes, solo iconos === */
   .bottom-nav{
-    position:fixed; bottom:0; left:0; right:0; z-index:60; max-width:600px; margin:0 auto;
-    display:flex; justify-content:space-around;
-    padding:12px 6px calc(env(safe-area-inset-bottom, 0px) + 14px);
-    background:rgba(9,20,16,.98);
-    backdrop-filter:blur(18px) saturate(140%); -webkit-backdrop-filter:blur(18px) saturate(140%);
-    border-top:1px solid var(--panel-border);
-    box-shadow:0 -8px 24px rgba(0,0,0,.35);
+    position:fixed; bottom:calc(env(safe-area-inset-bottom, 0px) + 18px); left:50%; transform:translateX(-50%);
+    z-index:60; width:auto;
+    display:flex; align-items:center; gap:2px;
+    padding:7px;
+    background:rgba(18,40,32,.72);
+    backdrop-filter:blur(24px) saturate(180%); -webkit-backdrop-filter:blur(24px) saturate(180%);
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:999px;
+    box-shadow:0 10px 34px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
   }
   .bn-item{
-    display:flex; flex-direction:column; align-items:center; gap:5px; flex:1;
+    display:flex; align-items:center; justify-content:center;
     background:none; border:none; color:var(--text-dim); cursor:pointer;
-    font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.03em;
-    padding:6px 4px 4px; border-radius:14px; transition:color .25s;
+    width:56px; height:56px; border-radius:50%; transition:background .2s, color .2s;
   }
-  .bn-item .bn-icon{font-size:26px; opacity:.55; filter:grayscale(.5); transition:all .25s; line-height:1;}
-  .bn-item.active{color:var(--synapse);}
-  .bn-item.active .bn-icon{opacity:1; filter:none; transform:translateY(-1px); text-shadow:0 0 10px rgba(20,184,125,.6);}
-  .bn-item:active{transform:scale(.94); background:rgba(20,184,125,.08);}
+  .bn-item .bn-icon{font-size:25px; opacity:.6; filter:grayscale(.4); transition:all .2s; line-height:1;}
+  .bn-item .bn-label{display:none;}
+  .bn-item.active{background:rgba(20,184,125,.2);}
+  .bn-item.active .bn-icon{opacity:1; filter:none; text-shadow:0 0 10px rgba(20,184,125,.6);}
+  .bn-item:active{transform:scale(.88);}
   .screen{display:none;}
   .screen.active{display:block; animation:fade-in .35s ease;}
   @keyframes fade-in{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
@@ -552,10 +554,10 @@
 </div>
 
 <nav class="bottom-nav" id="bottom-nav">
-  <button class="bn-item" id="bn-home" onclick="goHome()"><span class="bn-icon">🏠</span>Home</button>
-  <button class="bn-item" id="bn-menu" onclick="showScreen('menu')"><span class="bn-icon">📋</span>Registrar</button>
-  <button class="bn-item" id="bn-consult" onclick="showScreen('consult-menu')"><span class="bn-icon">🔍</span>Consultar</button>
-  <button class="bn-item" id="bn-plan" onclick="openPlanHoy()"><span class="bn-icon">✅</span>Plan Hoy</button>
+  <button class="bn-item" id="bn-home" onclick="goHome()" title="Home"><span class="bn-icon">🏠</span><span class="bn-label">Home</span></button>
+  <button class="bn-item" id="bn-menu" onclick="showScreen('menu')" title="Registrar"><span class="bn-icon">📋</span><span class="bn-label">Registrar</span></button>
+  <button class="bn-item" id="bn-consult" onclick="showScreen('consult-menu')" title="Consultar"><span class="bn-icon">🔍</span><span class="bn-label">Consultar</span></button>
+  <button class="bn-item" id="bn-plan" onclick="openPlanHoy()" title="Plan Hoy"><span class="bn-icon">✅</span><span class="bn-label">Plan Hoy</span></button>
 </nav>
 
 </div>
